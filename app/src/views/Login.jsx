@@ -265,7 +265,7 @@ const Login = ({ mode }) => {
                           disabled={_.size(companyBusiness) == 1 || isSubmitting}
                         >
                           {companyBusiness.map((c, index) => (
-                            <MenuItem key={c.id || index} value={c.id}>
+                            <MenuItem key={index} value={c.id}>
                               {c.description}
                             </MenuItem>
                           ))}
@@ -285,7 +285,7 @@ const Login = ({ mode }) => {
                           disabled={!values.companyBusinessId || isSubmitting}
                         >
                           {companies.map((c, index) => (
-                            <MenuItem key={c.id || index} value={c.id}>
+                            <MenuItem key={index} value={c.codigo_empresa_filial}>
                               {c.name}
                             </MenuItem>
                           ))}

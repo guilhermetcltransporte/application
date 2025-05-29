@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import { getServerSession } from "next-auth"
 
 // Component Imports
-import AccountSettings from '@views/pages/account-settings'
+import AccountSettings from '@/views/settings'
 import { authOptions } from '@/libs/auth'
 
 const AccountTab = dynamic(() => import('@views/pages/account-settings/account'))

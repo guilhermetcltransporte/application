@@ -41,9 +41,12 @@ export class AppContext extends Sequelize {
       },
     })
 
+    this.Company.hasMany(this.CompanyUser, {as: 'companyUsers', foreignKey: 'companyId'})
+
+    this.CompanyBusiness.hasMany(this.Company, {as: 'companies', foreignKey: 'companyBusinessId'})
     
     this.User.hasMany(this.CompanyUser, {as: 'companyUsers', foreignKey: 'userId'})
-    this.User.belongsTo(this.UserMember, {as: 'userMember', foreignKey: 'id', targetKey: 'id'})
+    this.User.belongsTo(this.UserMember, {as: 'userMember', foreignKey: 'userId', targetKey: 'userId'})
 
     /*
     this.Called.belongsTo(this.Company, {as: 'company', foreignKey: 'companyId', targetKey: 'id'})

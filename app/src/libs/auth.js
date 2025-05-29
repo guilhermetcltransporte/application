@@ -1,11 +1,11 @@
 import CredentialProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import { PrismaAdapter } from '@auth/prisma-adapter'
+import { AppContext } from '@/database'
 import _ from 'lodash'
-import { AppContext } from '../prisma/AppContext'
+import { Sequelize } from 'sequelize'
 
 export const authOptions = {
-  adapter: PrismaAdapter(AppContext),
+  //adapter: PrismaAdapter(AppContext),
   providers: [
     CredentialProvider({
       name: 'Credentials',
@@ -13,108 +13,112 @@ export const authOptions = {
       credentials: {},
       async authorize(credentials) {
 
+        console.log(credentials)
+
         const { email, password, companyBusinessId, companyId } = credentials
 
         try {
 
           const db = new AppContext()
 
-          const user = await db.user.findFirst({
-            where: {
-              OR: [
-                { userName: email },
-                { userMember: { email: email } },
+          //await db.transaction(async (transaction) => {
+
+            console.log('getUser')
+
+            const user = await db.User.findOne({
+              attributes: ['userId', 'userName'],
+              include: [
+                {model: db.UserMember, as: 'userMember', attributes: ['userId', 'email', 'password']},
               ],
-            },
-            include: {
-              userMember: {
-                select: {
-                  email: true,
-                  password: true,
-                },
+              where: Sequelize.literal(`"user"."userName" = :email OR "userMember"."email" = :email`),
+              replacements: { email },
+              //transaction
+            })
+
+            if (_.isEmpty(user)) {
+              throw new Error(JSON.stringify({ status: 201, message: 'Usuário não encontrado!' }))
+            }
+
+            const data = JSON.stringify({ username: email, password: password })
+            
+            const config = {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
               },
-            },
-          })
+              body: data
+            }
 
-          if (_.isEmpty(user)) {
-            throw new Error(JSON.stringify({ status: 201, message: 'Usuário não encontrado!' }))
-          }
+            const response = await fetch(process.env.VALIDATE_USER, config)
 
-          const data = JSON.stringify({ username: email, password: password })
-          
-          const config = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: data
-          }
+            const res = await response.json()
 
-          const response = await fetch(process.env.VALIDATE_USER, config)
+            if (!res.d) {
+              throw new Error(JSON.stringify({ status: 202, message: 'Senha incorreta!' }))
+            }
 
-          const res = await response.json()
+            const whereCompanyBusiness = {}
 
-          if (!res.d) {
-            throw new Error(JSON.stringify({ status: 202, message: 'Senha incorreta!' }))
-          }
+            if (companyBusinessId) {
+              whereCompanyBusiness.codigo_empresa = Number(companyBusinessId)
+            }
 
-          const companyBusinesses = await db.companyBusiness.findMany({
-            where: {
-              ...(companyBusinessId && { id: Number(companyBusinessId) }),
-              companies: {
-                some: {
-                  ...(companyId && { id: Number(companyId) }),
-                  companyUsers: {
-                    some: {
-                      ...(user?.id && { userId: user.id }),
-                    },
+            const whereCompany = {}
+            if (companyId) {
+              whereCompany.codigo_empresa_filial = Number(companyId)
+            }
+
+            const companyBusinesses = await db.CompanyBusiness.findAll({
+              where: {
+                ...whereCompanyBusiness,
+                ...(user?.userId && {
+                  '$companies.companyUsers.userId$': user.userId
+                }),
+              },
+              include: [
+                {
+                  model: db.Company,
+                  as: 'companies',
+                  where: {
+                    ...whereCompany,
                   },
-                },
-              },
-            },
-            include: {
-              companies: {
-                where: {
-                  ...(companyId && { id: Number(companyId) }),
-                  companyUsers: {
-                    some: {
-                      ...(user?.id && { userId: user.id }),
+                  required: true,
+                  include: [
+                    {
+                      model: db.CompanyUser,
+                      as: 'companyUsers',
+                      required: true,
                     },
-                  },
+                  ],
+                  attributes: ['codigo_empresa_filial', 'name', 'surname', 'companyBusinessId'],
                 },
-                select: {
-                  id: true,
-                  name: true,
-                  surname: true,
-                  companyBusinessId: true
-                },
-                orderBy: {
-                  id: 'asc',
-                },
-              },
-            },
-          });
+              ],
+              order: [['companies', 'codigo_empresa_filial', 'ASC']],
+            })
 
-          if (_.size(companyBusinesses) == 0) {
-            throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma empresa encontrada!' }))
-          }
 
-          if (_.size(companyBusinesses) > 1) {
-            throw new Error(JSON.stringify({ status: 212, companyBusinessId, companyBusiness: companyBusinesses }))
-          }
+            if (_.size(companyBusinesses) == 0) {
+              throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma empresa encontrada!' }))
+            }
+  
+            if (_.size(companyBusinesses) > 1) {
+              throw new Error(JSON.stringify({ status: 212, companyBusinessId, companyBusiness: companyBusinesses }))
+            }
+  
+            if (_.size(companyBusinesses[0]?.companies) == 0) {
+              throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma filial encontrada!' }))
+            }
+  
+            if (_.size(companyBusinesses[0]?.companies) > 1) {
+              throw new Error(JSON.stringify({ status: 213, companyBusinessId: companyBusinesses[0].id, companyBusiness: companyBusinesses, companies: companyBusinesses[0]?.companies }))
+            }
 
-          if (_.size(companyBusinesses[0]?.companies) == 0) {
-            throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma filial encontrada!' }))
-          }
+            return {
+              user: user,
+              company: companyBusinesses[0]?.companies[0]
+            }
 
-          if (_.size(companyBusinesses[0]?.companies) > 1) {
-            throw new Error(JSON.stringify({ status: 213, companyBusinessId: companyBusinesses[0].id, companyBusiness: companyBusinesses, companies: companyBusinesses[0]?.companies }))
-          }
-
-          return {
-            user: user,
-            company: companyBusinesses[0]?.companies[0]
-          }
+          //})
 
         } catch (error) {
           throw new Error(error.message)

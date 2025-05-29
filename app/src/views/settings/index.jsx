@@ -1,5 +1,7 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+
 // React Imports
 import { useState } from 'react'
 
@@ -12,9 +14,28 @@ import TabPanel from '@mui/lab/TabPanel'
 // Component Imports
 import CustomTabList from '@core/components/mui/TabList'
 
-const AccountSettings = ({ tabContentList }) => {
+import AccountDetails from '@/views/settings/company/AccountDetails'
+import Company from './company'
+
+const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
+const Signature = dynamic(() => import('@views/settings/signature'))
+const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
+const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
+
+export const ViewSettings = ({ company }) => {
+    
+  // Vars
+  const tabContentList = {
+    'company': <Company company={company} />,
+    'users': <></>,
+    security: <SecurityTab />,
+    'billing-plans': <Signature />,
+    notifications: <NotificationsTab />,
+    connections: <ConnectionsTab />
+  }
+
   // States
-  const [activeTab, setActiveTab] = useState('account')
+  const [activeTab, setActiveTab] = useState('company')
 
   const handleChange = (event, value) => {
     setActiveTab(value)
@@ -25,8 +46,8 @@ const AccountSettings = ({ tabContentList }) => {
       <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
           <CustomTabList onChange={handleChange} variant='scrollable'>
-            <Tab label='Empresa' icon={<i className='ri-group-line' />} iconPosition='start' value='account' />
-            <Tab label='Usuários' icon={<i className='ri-lock-2-line' />} iconPosition='start' value='security' />
+            <Tab label='Empresa' icon={<i className='ri-group-line' />} iconPosition='start' value='company' />
+            <Tab label='Usuários' icon={<i className='ri-lock-2-line' />} iconPosition='start' value='users' />
             <Tab label='Certificado' icon={<i className='ri-lock-2-line' />} iconPosition='start' value='security' />
             <Tab label='Assinatura' icon={<i className='ri-bookmark-line' />} iconPosition='start' value='billing-plans' />
             <Tab label='Notifications' icon={<i className='ri-notification-4-line' />} iconPosition='start' value='notifications' />
@@ -42,5 +63,3 @@ const AccountSettings = ({ tabContentList }) => {
     </TabContext>
   )
 }
-
-export default AccountSettings

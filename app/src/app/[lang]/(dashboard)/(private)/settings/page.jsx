@@ -1,34 +1,22 @@
 // Next Imports
-import dynamic from 'next/dynamic'
+
 import { getServerSession } from "next-auth"
 
 // Component Imports
-import AccountSettings from '@views/pages/account-settings'
+import { ViewSettings } from '@/views/settings'
 import { authOptions } from '@/libs/auth'
+import { AppContext } from '@/database'
 
-const Company = dynamic(() => import('@views/settings/company'))
-const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
-const Signature = dynamic(() => import('@views/settings/signature'))
-const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
-const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
-
-// Vars
-const tabContentList = () => ({
-  account: <Company />,
-  security: <SecurityTab />,
-  'billing-plans': <Signature />,
-  notifications: <NotificationsTab />,
-  connections: <ConnectionsTab />
-})
-
-const AccountSettingsPage = async () => {
+const Settings = async () => {
 
   const session = await getServerSession(authOptions)
 
-  console.log(session)
+  const db = new AppContext()
 
-  return <AccountSettings tabContentList={tabContentList()} />
+  const company = await db.Company.findOne({attributes: ['codigo_empresa_filial', 'cnpj', 'name', 'surname'], where: [{codigo_empresa_filial: session.company.codigo_empresa_filial}]})
+
+  return <ViewSettings company={company.dataValues} />
 
 }
 
-export default AccountSettingsPage
+export default Settings

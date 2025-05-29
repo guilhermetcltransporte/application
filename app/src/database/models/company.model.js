@@ -15,12 +15,12 @@ export class Company {
   }
 
   name = {
-    field: 'nome_fantasia',
+    field: 'descricao',
     type: Sequelize.STRING
   }
 
   surname = {
-    field: 'descricao',
+    field: 'nome_fantasia',
     type: Sequelize.STRING
   }
 
