@@ -73,6 +73,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/dashboards/academy`}>{dictionary['navigation'].academy}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/logistics`}>{dictionary['navigation'].logistics}</MenuItem>
         </SubMenu>
+        <MenuItem href={`/${locale}/settings`} icon={<i className='ri-settings-3-line' />}>
+          {dictionary['navigation'].settings}
+        </MenuItem>
+        {/*
         <SubMenu label={dictionary['navigation'].frontPages} icon={<i className='ri-file-copy-line' />}>
           <MenuItem href='/front-pages/landing-page' target='_blank'>
             {dictionary['navigation'].landing}
@@ -369,7 +373,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             </SubMenu>
             <MenuItem disabled>{dictionary['navigation'].disabledMenu}</MenuItem>
           </SubMenu>
-        </MenuSection>
+        </MenuSection>*/}
       </Menu>
       {/* <Menu
           popoutMenuOffset={{ mainAxis: 17 }}

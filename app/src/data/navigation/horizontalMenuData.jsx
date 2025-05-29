@@ -32,6 +32,7 @@ const horizontalMenuData = dictionary => [
       }
     ]
   },
+  /*
   {
     label: dictionary['navigation'].apps,
     icon: 'ri-mail-open-line',
@@ -593,6 +594,7 @@ const horizontalMenuData = dictionary => [
       }
     ]
   }
+  */
 ]
 
 export default horizontalMenuData

@@ -12,5 +12,6 @@ import { NextResponse } from 'next/server'
 import { db } from '@/fake-db/apps/permissions'
 
 export async function GET() {
+  console.log('aaaa')
   return NextResponse.json(db)
 }

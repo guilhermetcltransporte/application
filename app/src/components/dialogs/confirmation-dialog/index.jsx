@@ -43,7 +43,7 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
             })}
           >
             <Typography variant='h4'>
-              {type === 'delete-account' && 'Are you sure you want to deactivate your account?'}
+              {type === 'delete-account' && 'Tem certeza de que deseja desativar essa empresa?'}
               {type === 'unsubscribe' && 'Are you sure to cancel your subscription?'}
               {type === 'suspend-account' && 'Are you sure?'}
               {type === 'delete-order' && 'Are you sure?'}
@@ -68,7 +68,7 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
                 ? 'Yes, Delete Order!'
                 : type === 'delete-customer'
                   ? 'Yes, Delete Customer!'
-                  : 'Yes'}
+                  : 'Sim'}
           </Button>
           <Button
             variant='outlined'
@@ -77,7 +77,7 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
               handleConfirmation(false)
             }}
           >
-            Cancel
+            Cancelar
           </Button>
         </DialogActions>
       </Dialog>
@@ -95,13 +95,13 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
           />
           <Typography variant='h4' className='mbe-2'>
             {userInput
-              ? `${type === 'delete-account' ? 'Deactivated' : type === 'unsubscribe' ? 'Unsubscribed' : type === 'delete-order' || 'delete-customer' ? 'Deleted' : 'Suspended!'}`
-              : 'Cancelled'}
+              ? `${type === 'delete-account' ? 'Desativado' : type === 'unsubscribe' ? 'Unsubscribed' : type === 'delete-order' || 'delete-customer' ? 'Deleted' : 'Suspended!'}`
+              : 'Cancelado'}
           </Typography>
           <Typography color='text.primary'>
             {userInput ? (
               <>
-                {type === 'delete-account' && 'Your account has been deactivated successfully.'}
+                {type === 'delete-account' && 'Essa empresa foi desativada com sucesso.'}
                 {type === 'unsubscribe' && 'Your subscription cancelled successfully.'}
                 {type === 'suspend-account' && 'User has been suspended.'}
                 {type === 'delete-order' && 'Your order deleted successfully.'}
@@ -109,7 +109,7 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
               </>
             ) : (
               <>
-                {type === 'delete-account' && 'Account Deactivation Cancelled!'}
+                {type === 'delete-account' && 'Desativação da empresa cancelada!'}
                 {type === 'unsubscribe' && 'Unsubscription Cancelled!!'}
                 {type === 'suspend-account' && 'Cancelled Suspension :)'}
                 {type === 'delete-order' && 'Order Deletion Cancelled'}

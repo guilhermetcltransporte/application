@@ -22,6 +22,8 @@ import { getServerMode } from '@core/utils/serverHelpers'
 
 // Data Imports
 import { getUserData } from '@/app/server/actions'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/libs/auth'
 
 /**
  * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
@@ -40,6 +42,11 @@ import { getUserData } from '@/app/server/actions'
   return res.json()
 } */
 const DashboardCRM = async () => {
+
+  const session = await getServerSession(authOptions)
+
+  console.log("session: ", session)
+
   // Vars
   const data = await getUserData()
   const serverMode = await getServerMode()

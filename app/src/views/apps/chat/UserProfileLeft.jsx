@@ -156,7 +156,7 @@ const UserProfileLeft = props => {
               </List>
             </div>
             <Button variant='contained' fullWidth className='mbs-auto' endIcon={<i className='ri-logout-box-r-line' />}>
-              Logout
+              Sair
             </Button>
           </div>
         </ScrollWrapper>

@@ -164,8 +164,8 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
         </div>
         <div className={classnames('customizer-header flex items-center justify-between', styles.header)}>
           <div className='flex flex-col gap-2'>
-            <h4 className={styles.customizerTitle}>Theme Customizer</h4>
-            <p className={styles.customizerSubtitle}>Customize & Preview in Real Time</p>
+            <h4 className={styles.customizerTitle}>Customização</h4>
+            <p className={styles.customizerSubtitle}>Personalize e visualize em tempo real</p>
           </div>
           <div className='flex gap-4'>
             <div onClick={resetSettings} className='relative flex cursor-pointer'>
@@ -182,9 +182,9 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
         >
           <div className={classnames('customizer-body flex flex-col', styles.customizerBody)}>
             <div className='theming-section flex flex-col gap-6'>
-              <Chip variant='tonal' label='Theming' size='small' color='primary' className='self-start rounded-sm' />
+              <Chip variant='tonal' label='Tema' size='small' color='primary' className='self-start rounded-sm' />
               <div className='flex flex-col gap-2'>
-                <p className='font-medium'>Primary Color</p>
+                <p className='font-medium'>Cor</p>
                 <div className='flex items-center justify-between'>
                   {primaryColorConfig.map(item => (
                     <div
@@ -245,7 +245,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                 </div>
               </div>
               <div className='flex flex-col gap-2'>
-                <p className='font-medium'>Mode</p>
+                <p className='font-medium'>Modo</p>
                 <div className='flex items-center justify-between'>
                   <div className='flex flex-col items-start gap-0.5'>
                     <div
@@ -257,7 +257,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                       <i className='ri-sun-line text-[30px]' />
                     </div>
                     <p className={styles.itemLabel} onClick={() => handleChange('mode', 'light')}>
-                      Light
+                      Claro
                     </p>
                   </div>
                   <div className='flex flex-col items-start gap-0.5'>
@@ -270,7 +270,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                       <i className='ri-moon-clear-line text-[30px]' />
                     </div>
                     <p className={styles.itemLabel} onClick={() => handleChange('mode', 'dark')}>
-                      Dark
+                      Escuro
                     </p>
                   </div>
                   <div className='flex flex-col items-start gap-0.5'>
@@ -283,7 +283,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                       <i className='ri-computer-line text-[30px]' />
                     </div>
                     <p className={styles.itemLabel} onClick={() => handleChange('mode', 'system')}>
-                      System
+                      Automático
                     </p>
                   </div>
                 </div>
@@ -310,7 +310,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                       <SkinBordered />
                     </div>
                     <p className={styles.itemLabel} onClick={() => handleChange('skin', 'bordered')}>
-                      Bordered
+                      Bordas
                     </p>
                   </div>
                 </div>
@@ -320,7 +320,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
               settings.layout === 'horizontal' ? null : (
                 <div className='flex items-center justify-between'>
                   <label className='font-medium cursor-pointer' htmlFor='customizer-semi-dark'>
-                    Semi Dark
+                    Semi Escuro
                   </label>
                   <Switch
                     id='customizer-semi-dark'
@@ -334,7 +334,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
             <div className='layout-section flex flex-col gap-6'>
               <Chip variant='tonal' label='Layout' size='small' color='primary' className='self-start rounded-sm' />
               <div className='flex flex-col gap-2'>
-                <p className='font-medium'>Layouts</p>
+                <p className='font-medium'>Menu</p>
                 <div className='flex items-center justify-between'>
                   <div className='flex flex-col items-start gap-0.5'>
                     <div
@@ -355,7 +355,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                       <LayoutCollapsed />
                     </div>
                     <p className={styles.itemLabel} onClick={() => handleChange('layout', 'collapsed')}>
-                      Collapsed
+                      Recolhido
                     </p>
                   </div>
                   <div className='flex flex-col items-start gap-0.5'>
@@ -372,7 +372,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                 </div>
               </div>
               <div className='flex flex-col gap-2'>
-                <p className='font-medium'>Content</p>
+                <p className='font-medium'>Conteúdo</p>
                 <div className='flex items-center gap-4'>
                   <div className='flex flex-col items-start gap-0.5'>
                     <div
@@ -399,7 +399,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                         })
                       }
                     >
-                      Compact
+                      Compacto
                     </p>
                   </div>
                   <div className='flex flex-col items-start gap-0.5'>
@@ -417,14 +417,14 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                         updateSettings({ navbarContentWidth: 'wide', contentWidth: 'wide', footerContentWidth: 'wide' })
                       }
                     >
-                      Wide
+                      Espaçoso
                     </p>
                   </div>
                 </div>
               </div>
               {!disableDirection && (
                 <div className='flex flex-col gap-2'>
-                  <p className='font-medium'>Direction</p>
+                  <p className='font-medium'>Direção</p>
                   <div className='flex items-center gap-4'>
                     <Link href={getLocalePath(pathName, 'en')}>
                       <div className='flex flex-col items-start gap-0.5'>
@@ -436,7 +436,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                           <DirectionLtr />
                         </div>
                         <p className={styles.itemLabel}>
-                          Left to Right <br />
+                          Esquerda para Direita <br />
                           (English)
                         </p>
                       </div>
@@ -451,7 +451,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                           <DirectionRtl />
                         </div>
                         <p className={styles.itemLabel}>
-                          Right to Left <br />
+                          Direita para Esquerda <br />
                           (Arabic)
                         </p>
                       </div>

@@ -1,12 +1,21 @@
 // Next Imports
 import { NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
 
 // Mock data for demo purpose
 import { users } from './users'
 
 export async function POST(req) {
+
   // Vars
   const { email, password } = await req.json()
+
+  const db = new PrismaClient()
+
+  const user2 = await db.user.findFirst({select: {email: true}, where: {email}})
+
+  console.log(user2)
+
   const user = users.find(u => u.email === email && u.password === password)
   let response = null
 

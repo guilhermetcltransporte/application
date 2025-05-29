@@ -36,7 +36,7 @@ const initialData = {
 }
 
 const status = ['Status', 'Active', 'Inactive', 'Suspended']
-const languages = ['English', 'Spanish', 'French', 'German', 'Hindi']
+const languages = ['Português', 'English', 'Spanish', 'French', 'German', 'Hindi']
 const countries = ['Select Country', 'France', 'Russia', 'China', 'UK', 'US']
 
 const EditUserInfo = ({ open, setOpen, data }) => {

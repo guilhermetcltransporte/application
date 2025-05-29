@@ -1,58 +1,56 @@
 'use client'
 
-// React Imports
-import { useState } from 'react'
-
-// Next Imports
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { Formik, Form, Field, ErrorMessage } from 'formik'
+import * as Yup from 'yup'
 
-// MUI Imports
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import IconButton from '@mui/material/IconButton'
-import InputAdornment from '@mui/material/InputAdornment'
-import Checkbox from '@mui/material/Checkbox'
-import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Divider from '@mui/material/Divider'
-import Alert from '@mui/material/Alert'
+import {
+  Typography,
+  TextField,
+  IconButton,
+  InputAdornment,
+  Checkbox,
+  Button,
+  FormControlLabel,
+  Divider,
+  MenuItem,
+  InputLabel,
+  Select,
+  FormControl,
+  Alert
+} from '@mui/material'
 
-// Third-party Imports
 import { signIn } from 'next-auth/react'
-import { Controller, useForm } from 'react-hook-form'
-import { valibotResolver } from '@hookform/resolvers/valibot'
-import { object, minLength, string, email, pipe, nonEmpty } from 'valibot'
 import classnames from 'classnames'
+import _ from 'lodash'
 
-// Component Imports
 import Logo from '@components/layout/shared/Logo'
-
-// Config Imports
 import themeConfig from '@configs/themeConfig'
-
-// Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
-
-// Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
 
-const schema = object({
-  email: pipe(string(), minLength(1, 'This field is required'), email('Please enter a valid email address')),
-  password: pipe(
-    string(),
-    nonEmpty('This field is required'),
-    minLength(5, 'Password must be at least 5 characters long')
-  )
+const validationSchema = Yup.object().shape({
+  email: Yup.string().required('Este campo é obrigatório'),
+  password: Yup.string().min(6, 'A senha deve ter pelo menos 6 caracteres').required('Este campo é obrigatório'),
+  companyBusinessId: Yup.string(),
+  companyId: Yup.string()
 })
 
 const Login = ({ mode }) => {
-  // States
+
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
+  const [companyBusiness, setCompanyBusiness] = useState([])
+  const [companies, setCompanies] = useState([])
 
-  // Vars
+  const { settings } = useSettings()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { lang: locale } = useParams()
+
   const darkImg = '/images/pages/auth-v2-mask-1-dark.png'
   const lightImg = '/images/pages/auth-v2-mask-1-light.png'
   const darkIllustration = '/images/illustrations/auth/v2-login-dark.png'
@@ -60,26 +58,7 @@ const Login = ({ mode }) => {
   const borderedDarkIllustration = '/images/illustrations/auth/v2-login-dark-border.png'
   const borderedLightIllustration = '/images/illustrations/auth/v2-login-light-border.png'
 
-  // Hooks
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { lang: locale } = useParams()
-  const { settings } = useSettings()
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors }
-  } = useForm({
-    resolver: valibotResolver(schema),
-    defaultValues: {
-      email: 'admin@materialize.com',
-      password: 'admin'
-    }
-  })
-
   const authBackground = useImageVariant(mode, lightImg, darkImg)
-
   const characterIllustration = useImageVariant(
     mode,
     lightIllustration,
@@ -88,160 +67,242 @@ const Login = ({ mode }) => {
     borderedDarkIllustration
   )
 
-  const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+  const handleClickShowPassword = () => setIsPasswordShown(prev => !prev)
 
-  const onSubmit = async data => {
-    const res = await signIn('credentials', {
-      email: data.email,
-      password: data.password,
-      redirect: false
-    })
+  const handleLogin = async (values, { setSubmitting, setFieldValue }) => {
+    try {
 
-    if (res && res.ok && res.error === null) {
-      // Vars
-      const redirectURL = searchParams.get('redirectTo') ?? '/'
+      setErrorState(null)
 
-      router.replace(getLocalizedUrl(redirectURL, locale))
-    } else {
+      const res = await signIn('credentials', { ...values, redirect: false })
+
       if (res?.error) {
+
         const error = JSON.parse(res.error)
+
+        if (error.status === 201) {
+          setErrorState(error.message)
+          return
+        }
+
+        if (error.status === 202) {
+          setErrorState(error.message)
+          return
+        }
+
+        if (error.status === 211) {
+          setErrorState(error.message)
+          return
+        }
+
+        if (error.status === 212) {
+          setCompanyBusiness(error.companyBusiness || [])
+          return
+        }
+
+        if (error.status === 213) {
+          setCompanyBusiness(error.companyBusiness || [])
+          setCompanies(error.companies || [])
+          setFieldValue('companyBusinessId', error.companyBusinessId)
+          return
+        }
 
         setErrorState(error)
       }
+
+      if (res?.ok && !res.error) {
+        const redirectURL = searchParams.get('redirectTo') ?? '/'
+        router.replace(getLocalizedUrl(redirectURL, locale))
+      }
+
+      setSubmitting(false)
+
+    } catch (error) {
+      console.log(error)
     }
   }
 
   return (
     <div className='flex bs-full justify-center'>
-      <div
-        className={classnames(
-          'flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden',
-          {
-            'border-ie': settings.skin === 'bordered'
-          }
-        )}
-      >
+      <div className={classnames('flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden', {
+        'border-ie': settings.skin === 'bordered'
+      })}>
         <div className='pli-6 max-lg:mbs-40 lg:mbe-24'>
-          <img
-            src={characterIllustration}
-            alt='character-illustration'
-            className='max-bs-[673px] max-is-full bs-auto'
-          />
+          <img src={characterIllustration} alt='character-illustration' className='max-bs-[673px] max-is-full bs-auto' />
         </div>
         <img src={authBackground} className='absolute bottom-[4%] z-[-1] is-full max-md:hidden' />
       </div>
+
       <div className='flex justify-center items-center bs-full bg-backgroundPaper !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px]'>
         <div className='absolute block-start-5 sm:block-start-[38px] inline-start-6 sm:inline-start-[38px]'>
           <Logo />
         </div>
-        <div className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
-          <div>
-            <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}!👋🏻`}</Typography>
-            <Typography>Please sign-in to your account and start the adventure</Typography>
-          </div>
-          <Alert icon={false} className='bg-[var(--mui-palette-primary-lightOpacity)]'>
-            <Typography variant='body2' color='primary.main'>
-              Email: <span className='font-medium'>admin@materialize.com</span> / Pass:{' '}
-              <span className='font-medium'>admin</span>
-            </Typography>
-          </Alert>
 
-          <form
-            noValidate
-            action={() => {}}
-            autoComplete='off'
-            onSubmit={handleSubmit(onSubmit)}
-            className='flex flex-col gap-5'
-          >
-            <Controller
-              name='email'
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  autoFocus
-                  type='email'
-                  label='Email'
-                  onChange={e => {
-                    field.onChange(e.target.value)
-                    errorState !== null && setErrorState(null)
-                  }}
-                  {...((errors.email || errorState !== null) && {
-                    error: true,
-                    helperText: errors?.email?.message || errorState?.message[0]
-                  })}
-                />
-              )}
-            />
-            <Controller
-              name='password'
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label='Password'
-                  id='login-password'
-                  type={isPasswordShown ? 'text' : 'password'}
-                  onChange={e => {
-                    field.onChange(e.target.value)
-                    errorState !== null && setErrorState(null)
-                  }}
-                  slotProps={{
-                    input: {
+        <Formik
+          initialValues={{
+            email: '',
+            password: '',
+            companyBusinessId: '',
+            companyId: ''
+          }}
+          validationSchema={validationSchema}
+          onSubmit={handleLogin}
+        >
+          {({ isSubmitting, values, handleChange, errors, touched, submitForm }) => {
+            
+            useEffect(() => {
+              if (values.companyBusinessId) {
+                submitForm()
+              }
+              if (values.companyId) {
+                submitForm()
+              }
+            }, [values.companyBusinessId, values.companyId])
+            
+            return (
+            <Form className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
+
+              {_.size(companyBusiness) === 0 && _.size(companies) === 0 ? (
+                <>
+                  <div>
+                    <Typography variant='h4'>{`Bem-vindo ao ${themeConfig.templateName}! 👋🏻`}</Typography>
+                    <br></br>
+                    <Typography>Por favor, faça login na sua conta</Typography>
+                  </div>
+                  
+                  {errorState && (<Alert severity="warning">{errorState}</Alert>)}
+
+                  <Field
+                    as={TextField}
+                    name="email"
+                    label="Usuário"
+                    variant="filled"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                    autoFocus
+                    onChange={(e) => {
+                      handleChange(e)
+                      setErrorState(null)
+                    }}
+                    helperText={<ErrorMessage name="email" />}
+                    error={!!errorState || (touched.email && Boolean(errors.email))}
+                    disabled={isSubmitting}
+                  />
+
+                  <Field
+                    as={TextField}
+                    name="password"
+                    label="Password"
+                    variant="filled"
+                    InputLabelProps={{ shrink: true }}
+                    type={isPasswordShown ? 'text' : 'password'}
+                    fullWidth
+                    onChange={(e) => {
+                      handleChange(e)
+                      setErrorState(null)
+                    }}
+                    InputProps={{
                       endAdornment: (
-                        <InputAdornment position='end'>
-                          <IconButton
-                            edge='end'
-                            onClick={handleClickShowPassword}
-                            onMouseDown={e => e.preventDefault()}
-                            aria-label='toggle password visibility'
-                          >
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleClickShowPassword} edge="end">
                             <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
                           </IconButton>
                         </InputAdornment>
                       )
-                    }
-                  }}
-                  {...(errors.password && { error: true, helperText: errors.password.message })}
-                />
+                    }}
+                    helperText={<ErrorMessage name="password" />}
+                    error={!!errorState || (touched.password && Boolean(errors.password))}
+                    disabled={isSubmitting}
+                  />
+
+                  <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
+                    <FormControlLabel control={<Checkbox defaultChecked />} label='Lembrar' disabled={isSubmitting} />
+                    <Typography component={Link} href={getLocalizedUrl('/forgot-password', locale)} color='primary.main'>
+                      Esqueceu sua senha ?
+                    </Typography>
+                  </div>
+
+                  <Button type="submit" fullWidth variant="contained" disabled={isSubmitting}>
+                    {isSubmitting ? `Entrando...` : `Entrar`}
+                  </Button>
+
+                  <div className='flex justify-center items-center flex-wrap gap-2'>
+                    <Typography>Ainda não possui uma conta ?</Typography>
+                    <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
+                      Cadastra-se
+                    </Typography>
+                  </div>
+
+                  <Divider className='gap-3'>or</Divider>
+
+                  <Button
+                    color='secondary'
+                    className='self-center text-textPrimary'
+                    startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
+                    sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
+                    onClick={() => signIn('google')}
+                    disabled={isSubmitting}
+                  >
+                    Sign in with Google
+                  </Button>
+
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Typography variant='h4'>Próximo passo! 👇🏻</Typography>
+                    <Typography>Informe a empresa</Typography>
+                  </div>
+
+                  <Field name="companyBusinessId">
+                    {({ field, meta }) => (
+                      <FormControl fullWidth variant="filled">
+                        <InputLabel id="companyBusiness-label">Empresa</InputLabel>
+                        <Select
+                          labelId="companyBusiness-label"
+                          {...field}
+                          error={meta.touched && Boolean(meta.error)}
+                          disabled={_.size(companyBusiness) == 1 || isSubmitting}
+                        >
+                          {companyBusiness.map((c, index) => (
+                            <MenuItem key={c.id || index} value={c.id}>
+                              {c.description}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Field>
+
+                  <Field name="companyId">
+                    {({ field, meta }) => (
+                      <FormControl fullWidth variant="filled">
+                        <InputLabel id="company-label">Filial</InputLabel>
+                        <Select
+                          labelId="company-label"
+                          {...field}
+                          error={meta.touched && Boolean(meta.error)}
+                          disabled={!values.companyBusinessId || isSubmitting}
+                        >
+                          {companies.map((c, index) => (
+                            <MenuItem key={c.id || index} value={c.id}>
+                              {c.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Field>
+
+                  <Button type="submit" fullWidth variant="contained" disabled={isSubmitting}>
+                    {isSubmitting ? `Aguarde...` : `Continuar`}
+                  </Button>
+                </>
               )}
-            />
-            <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
-              <FormControlLabel control={<Checkbox defaultChecked />} label='Remember me' />
-              <Typography
-                className='text-end'
-                color='primary.main'
-                component={Link}
-                href={getLocalizedUrl('/forgot-password', locale)}
-              >
-                Forgot password?
-              </Typography>
-            </div>
-            <Button fullWidth variant='contained' type='submit'>
-              Log In
-            </Button>
-            <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography>New on our platform?</Typography>
-              <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
-                Create an account
-              </Typography>
-            </div>
-          </form>
-          <Divider className='gap-3'>or</Divider>
-          <Button
-            color='secondary'
-            className='self-center text-textPrimary'
-            startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
-            sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
-            onClick={() => signIn('google')}
-          >
-            Sign in with Google
-          </Button>
-        </div>
+
+            </Form>
+          )}}
+        </Formik>
       </div>
     </div>
   )
