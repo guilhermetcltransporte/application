@@ -14,8 +14,7 @@ import TabPanel from '@mui/lab/TabPanel'
 // Component Imports
 import CustomTabList from '@core/components/mui/TabList'
 
-import AccountDetails from '@/views/settings/company/AccountDetails'
-import Company from './company'
+import { Company } from './company'
 
 const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
 const Signature = dynamic(() => import('@views/settings/signature'))

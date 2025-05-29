@@ -30,6 +30,7 @@ export const metadata = {
 }
 
 const RootLayout = async props => {
+
   const params = await props.params
   const { children } = props
 

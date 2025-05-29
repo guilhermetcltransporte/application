@@ -8,6 +8,22 @@ import { CompanyBusiness } from './models/companyBusiness.model.js'
 import { User } from './models/user.model.js'
 import { UserMember } from './models/userMember.model.js'
 
+const afterFind = (result) => {
+  const trimStrings = obj => {
+    for (const key in obj) {
+      if (typeof obj[key] === 'string') {
+        obj[key] = obj[key].trim()
+      }
+    }
+  }
+
+  if (Array.isArray(result)) {
+    result.forEach(row => trimStrings(row.dataValues))
+  } else if (result && result.dataValues) {
+    trimStrings(result.dataValues)
+  }
+}
+
 export class AppContext extends Sequelize {
   
   Company = this.define('company', new Company(), { tableName: 'empresa_filial' })
@@ -47,6 +63,8 @@ export class AppContext extends Sequelize {
     
     this.User.hasMany(this.CompanyUser, {as: 'companyUsers', foreignKey: 'userId'})
     this.User.belongsTo(this.UserMember, {as: 'userMember', foreignKey: 'userId', targetKey: 'userId'})
+
+    this.Company.addHook('afterFind', afterFind)
 
     /*
     this.Called.belongsTo(this.Company, {as: 'company', foreignKey: 'companyId', targetKey: 'id'})

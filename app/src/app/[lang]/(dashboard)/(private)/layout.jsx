@@ -25,6 +25,7 @@ import { getDictionary } from '@/utils/getDictionary'
 import { getMode, getSystemMode } from '@core/utils/serverHelpers'
 
 const Layout = async props => {
+
   const params = await props.params
   const { children } = props
 
