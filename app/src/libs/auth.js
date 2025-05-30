@@ -19,104 +19,98 @@ export const authOptions = {
 
           const db = new AppContext()
 
-          //await db.transaction(async (transaction) => {
+          const user = await db.User.findOne({
+            attributes: ['userId', 'userName'],
+            include: [
+              {model: db.UserMember, as: 'userMember', attributes: ['userId', 'email', 'password']},
+            ],
+            where: Sequelize.literal(`"user"."userName" = :email OR "userMember"."email" = :email`),
+            replacements: { email },
+            //transaction
+          })
 
-            console.log('getUser')
+          if (_.isEmpty(user)) {
+            throw new Error(JSON.stringify({ status: 201, message: 'Usuário não encontrado!' }))
+          }
 
-            const user = await db.User.findOne({
-              attributes: ['userId', 'userName'],
-              include: [
-                {model: db.UserMember, as: 'userMember', attributes: ['userId', 'email', 'password']},
-              ],
-              where: Sequelize.literal(`"user"."userName" = :email OR "userMember"."email" = :email`),
-              replacements: { email },
-              //transaction
-            })
+          const data = JSON.stringify({ username: email, password: password })
+          
+          const config = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data
+          }
 
-            if (_.isEmpty(user)) {
-              throw new Error(JSON.stringify({ status: 201, message: 'Usuário não encontrado!' }))
-            }
+          const response = await fetch(process.env.VALIDATE_USER, config)
 
-            const data = JSON.stringify({ username: email, password: password })
-            
-            const config = {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: data
-            }
+          const res = await response.json()
 
-            const response = await fetch(process.env.VALIDATE_USER, config)
+          if (!res.d) {
+            throw new Error(JSON.stringify({ status: 202, message: 'Senha incorreta!' }))
+          }
 
-            const res = await response.json()
+          const whereCompanyBusiness = {}
 
-            if (!res.d) {
-              throw new Error(JSON.stringify({ status: 202, message: 'Senha incorreta!' }))
-            }
+          if (companyBusinessId) {
+            whereCompanyBusiness.codigo_empresa = Number(companyBusinessId)
+          }
 
-            const whereCompanyBusiness = {}
+          const whereCompany = {}
+          if (companyId) {
+            whereCompany.codigo_empresa_filial = Number(companyId)
+          }
 
-            if (companyBusinessId) {
-              whereCompanyBusiness.codigo_empresa = Number(companyBusinessId)
-            }
-
-            const whereCompany = {}
-            if (companyId) {
-              whereCompany.codigo_empresa_filial = Number(companyId)
-            }
-
-            const companyBusinesses = await db.CompanyBusiness.findAll({
-              where: {
-                ...whereCompanyBusiness,
-                ...(user?.userId && {
-                  '$companies.companyUsers.userId$': user.userId
-                }),
-              },
-              include: [
-                {
-                  model: db.Company,
-                  as: 'companies',
-                  where: {
-                    ...whereCompany,
-                  },
-                  required: true,
-                  include: [
-                    {
-                      model: db.CompanyUser,
-                      as: 'companyUsers',
-                      required: true,
-                    },
-                  ],
-                  attributes: ['codigo_empresa_filial', 'name', 'surname', 'companyBusinessId'],
+          const companyBusinesses = await db.CompanyBusiness.findAll({
+            where: {
+              ...whereCompanyBusiness,
+              ...(user?.userId && {
+                '$companies.companyUsers.userId$': user.userId
+              }),
+            },
+            include: [
+              {
+                model: db.Company,
+                as: 'companies',
+                where: {
+                  ...whereCompany,
                 },
-              ],
-              order: [['companies', 'codigo_empresa_filial', 'ASC']],
-            })
+                required: true,
+                include: [
+                  {
+                    model: db.CompanyUser,
+                    as: 'companyUsers',
+                    required: true,
+                  },
+                ],
+                attributes: ['codigo_empresa_filial', 'name', 'surname', 'companyBusinessId'],
+              },
+            ],
+            order: [['companies', 'codigo_empresa_filial', 'ASC']],
+          })
 
 
-            if (_.size(companyBusinesses) == 0) {
-              throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma empresa encontrada!' }))
-            }
-  
-            if (_.size(companyBusinesses) > 1) {
-              throw new Error(JSON.stringify({ status: 212, companyBusinessId, companyBusiness: companyBusinesses }))
-            }
-  
-            if (_.size(companyBusinesses[0]?.companies) == 0) {
-              throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma filial encontrada!' }))
-            }
-  
-            if (_.size(companyBusinesses[0]?.companies) > 1) {
-              throw new Error(JSON.stringify({ status: 213, companyBusinessId: companyBusinesses[0].id, companyBusiness: companyBusinesses, companies: companyBusinesses[0]?.companies }))
-            }
+          if (_.size(companyBusinesses) == 0) {
+            throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma empresa encontrada!' }))
+          }
 
-            return {
-              user: user,
-              company: companyBusinesses[0]?.companies[0]
-            }
+          if (_.size(companyBusinesses) > 1) {
+            throw new Error(JSON.stringify({ status: 212, companyBusinessId, companyBusiness: companyBusinesses }))
+          }
 
-          //})
+          if (_.size(companyBusinesses[0]?.companies) == 0) {
+            throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma filial encontrada!' }))
+          }
+
+          if (_.size(companyBusinesses[0]?.companies) > 1) {
+            throw new Error(JSON.stringify({ status: 213, companyBusinessId: companyBusinesses[0].id, companyBusiness: companyBusinesses, companies: companyBusinesses[0]?.companies }))
+          }
+
+          return {
+            user: user,
+            company: companyBusinesses[0]?.companies[0]
+          }
 
         } catch (error) {
           throw new Error(error.message)

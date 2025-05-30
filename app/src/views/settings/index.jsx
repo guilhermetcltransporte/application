@@ -26,12 +26,12 @@ import Security from '@views/pages/account-settings/security'
 const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
 const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
 
-export const ViewSettings = ({ company, users }) => {
+export const ViewSettings = ({ company, initialUsers }) => {
     
   // Vars
   const tabContentList = {
     'company': <Company company={company} />,
-    'users': <Users users={users} />,
+    'users': <Users initialUsers={initialUsers} />,
     'security': <Security />,
     'billing-plans': <></>, //<BillingPlans />,
     'notifications': <NotificationsTab />,
