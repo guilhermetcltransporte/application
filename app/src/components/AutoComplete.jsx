@@ -145,7 +145,7 @@ export const AutoComplete = (props) => {
   return (
     <AutocompleteContainer>
       <TextField
-        ref={inputRef}
+        inputRef={inputRef}
         name="password"
         label={label}
         variant="filled"
