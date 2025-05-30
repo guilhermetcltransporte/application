@@ -91,12 +91,11 @@ const Register = ({ mode }) => {
           </div>
           <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
             <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='CNPJ' />
-            <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='Username' />
-            <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='Email' />
+            <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='Usuário' />
             <TextField
               fullWidth
               variant='filled'
-              label='Password'
+              label='Senha'
               type={isPasswordShown ? 'text' : 'password'}
               slotProps={{
                 inputLabel: { shrink: true },
@@ -113,7 +112,7 @@ const Register = ({ mode }) => {
             />
             <TextField
               fullWidth
-              label='Password'
+              label='Confirmar senha'
               variant='filled'
               type={isPasswordShown ? 'text' : 'password'}
               slotProps={{

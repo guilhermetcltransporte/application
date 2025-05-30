@@ -1,11 +1,10 @@
+/*
 import CredentialProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import { PrismaAdapter } from '@auth/prisma-adapter'
 import _ from 'lodash'
 import { AppContext } from '../prisma/AppContext'
 
 export const authOptions = {
-  adapter: PrismaAdapter(AppContext),
   providers: [
     CredentialProvider({
       name: 'Credentials',
@@ -154,3 +153,4 @@ export const authOptions = {
     }
   }
 }
+*/

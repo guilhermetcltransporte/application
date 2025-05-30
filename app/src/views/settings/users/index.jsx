@@ -105,8 +105,6 @@ const columnHelper = createColumnHelper()
 
 export const Users = ({ users }) => {
 
-  console.log(users)
-
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})

@@ -13,8 +13,6 @@ export const authOptions = {
       credentials: {},
       async authorize(credentials) {
 
-        console.log(credentials)
-
         const { email, password, companyBusinessId, companyId } = credentials
 
         try {
