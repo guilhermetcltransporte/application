@@ -5,7 +5,7 @@ import styled from 'styled-components'
 import _ from 'lodash'
 import './AutoComplete.css'
 import { Message, toaster } from 'rsuite'
-import { IconButton, InputAdornment, TextField } from '@mui/material'
+import { CircularProgress, IconButton, InputAdornment, TextField } from '@mui/material'
 
 
 const AutocompleteContainer = styled.div`
@@ -189,17 +189,35 @@ class ControlAutoComplete extends Component {
                 label={label}
                 variant="filled"
                 slotProps={{ inputLabel: { shrink: true }}}
+                placeholder={!value ? '' : text(value)}
+                value={query}
                 type={'text'}
                 fullWidth
                 onChange={this.handleInputChange}
                 onKeyDown={this.handleKeyDown}
                 onBlur={this.handleBlur}
+                sx={{
+                    '& input::placeholder': {
+                    color: 'black',
+                    opacity: 1, // para garantir que fique visível (por padrão é 0.42 no MUI)
+                    }
+                }}
                 InputProps={{
                     endAdornment: (
                     <InputAdornment position="end">
-                        <IconButton size='small' edge="end">
-                        <i className={'ri-search-line'} />
-                        </IconButton>
+                        {loading ? (
+                            <IconButton size="small" edge="end" disabled>
+                            <i className="ri-loader-4-line spin" style={{ fontSize: 20 }} />
+                            </IconButton>
+                        ) : value ? (
+                            <IconButton size="small" edge="end" onClick={this.handleClear} aria-label="clear input">
+                            <i className="ri-close-line" style={{ fontSize: 20 }} />
+                            </IconButton>
+                        ) : (
+                            <IconButton size="small" edge="end" aria-label="search icon" onClick={this.handleSearch}>
+                            <i className="ri-search-line" style={{ fontSize: 20 }} />
+                            </IconButton>
+                        )}
                     </InputAdornment>
                     )
                 }}

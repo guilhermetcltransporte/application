@@ -1,79 +1,63 @@
+'use client'
+
 // React Imports
 import { useState } from 'react'
 
 // MUI Imports
 import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
-import FormControl from '@mui/material/FormControl'
 import IconButton from '@mui/material/IconButton'
-import InputLabel from '@mui/material/InputLabel'
-import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
-import FormHelperText from '@mui/material/FormHelperText'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 
 // Third-party Imports
-import { useForm, Controller } from 'react-hook-form'
+import { Formik, Form } from 'formik'
+import * as Yup from 'yup'
+
+// Components
 import { AutoComplete } from '@/components/AutoComplete'
 import { getUser } from '@/utils/search'
 
-// Vars
-const initialData = {
-  company: '',
-  country: '',
-  contact: ''
-}
+const AddUserDrawer = ({ open, handleClose, userData, setData }) => {
+  const [selectedUser, setSelectedUser] = useState(null)
 
-const AddUserDrawer = props => {
-  // Props
-  const { open, handleClose, userData, setData } = props
+  const initialValues = {
+    fullName: '',
+    username: '',
+    email: '',
+    role: '',
+    plan: '',
+    status: ''
+  }
 
-  // States
-  const [formData, setFormData] = useState(initialData)
-
-  // Hooks
-  const {
-    control,
-    reset: resetForm,
-    handleSubmit,
-    formState: { errors }
-  } = useForm({
-    defaultValues: {
-      fullName: '',
-      username: '',
-      email: '',
-      role: '',
-      plan: '',
-      status: ''
-    }
+  const validationSchema = Yup.object({
+    fullName: Yup.string().required('Nome é obrigatório')
+    // Adicione outras validações se quiser
   })
 
-  const onSubmit = data => {
+  const onSubmit = (values, { resetForm }) => {
     const newUser = {
       id: (userData?.length && userData?.length + 1) || 1,
       avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
-      fullName: data.fullName,
-      username: data.username,
-      email: data.email,
-      role: data.role,
-      currentPlan: data.plan,
-      status: data.status,
-      company: formData.company,
-      country: formData.country,
-      contact: formData.contact
+      fullName: values.fullName,
+      username: values.username,
+      email: values.email,
+      role: values.role,
+      currentPlan: values.plan,
+      status: values.status,
+      user: selectedUser // usuário retornado do AutoComplete
     }
 
     setData([...(userData ?? []), newUser])
     handleClose()
-    setFormData(initialData)
-    resetForm({ fullName: '', username: '', email: '', role: '', plan: '', status: '' })
+    setSelectedUser(null)
+    resetForm()
   }
 
   const handleReset = () => {
     handleClose()
-    setFormData(initialData)
+    setSelectedUser(null)
   }
 
   return (
@@ -93,34 +77,84 @@ const AddUserDrawer = props => {
       </div>
       <Divider />
       <div className='p-5'>
-        <form onSubmit={handleSubmit(data => onSubmit(data))} className='flex flex-col gap-5'>
+        <Formik
+          initialValues={{
+            fullName: '',
+            username: '',
+            email: '',
+            role: '',
+            plan: '',
+            status: '',
+            user: null // agora é parte do form
+          }}
+          validationSchema={Yup.object({
+            fullName: Yup.string().required('Nome é obrigatório'),
+            user: Yup.object()
+              .nullable()
+              .required('Usuário é obrigatório')
+          })}
+          onSubmit={(values, { resetForm }) => {
+            const newUser = {
+              id: (userData?.length && userData?.length + 1) || 1,
+              avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
+              fullName: values.fullName,
+              username: values.username,
+              email: values.email,
+              role: values.role,
+              currentPlan: values.plan,
+              status: values.status,
+              user: values.user // totalmente vindo do formik
+            }
 
-          {/*
-          <Controller
-            name='fullName'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
+            setData([...(userData ?? []), newUser])
+            handleClose()
+            resetForm()
+          }}
+        >
+          {({ values, errors, touched, handleChange, setFieldValue, setTouched }) => (
+            <Form className='flex flex-col gap-5'>
+
+              {/* AutoComplete controlado pelo Formik */}
+              <AutoComplete
+                label='Usuário'
+                value={values.user}
+                text={(item) => item?.userName}
+                onChange={(val) => {
+                  setFieldValue('user', val)
+                  setTouched({ ...touched, user: true }) // marca como tocado
+                }}
+                onSearch={getUser}
+              >
+                {(item) => <span>{item.userName}</span>}
+              </AutoComplete>
+
+              {/* Erro do AutoComplete */}
+              {touched.user && errors.user && (
+                <Typography variant='caption' color='error' sx={{ mt: -2 }}>
+                  {errors.user}
+                </Typography>
+              )}
+
               <TextField
-                {...field}
-                fullWidth
+                name='fullName'
+                label='Nome completo'
                 variant='filled'
+                fullWidth
                 InputLabelProps={{ shrink: true }}
-                label='Full Name'
-                placeholder='John Doe'
-                {...(errors.fullName && { error: true, helperText: 'This field is required.' })}
+                value={values.fullName}
+                onChange={handleChange}
+                error={touched.fullName && Boolean(errors.fullName)}
+                helperText={touched.fullName && errors.fullName}
               />
-            )}
-          />*/}
-          <AutoComplete label='Usuário' value={this.state?.company} text={(item) => `${item.userName}`} onChange={(company) => this.setState({company})} onSearch={async (search) => await getUser(search)}>
-            {(item) => <span>{item.userName}</span>}
-          </AutoComplete>
-          <div className='flex items-center gap-4'>
-            <Button variant='contained' type='submit' color='success'>
-              Confirmar
-            </Button>
-          </div>
-        </form>
+
+              <div className='flex items-center gap-4'>
+                <Button variant='contained' type='submit' color='success'>
+                  Confirmar
+                </Button>
+              </div>
+            </Form>
+          )}
+        </Formik>
       </div>
     </Drawer>
   )
