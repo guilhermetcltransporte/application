@@ -3,8 +3,8 @@
 import React, { Component, createRef } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash'
-import './AutoComplete.css'
 import { IconButton, InputAdornment, TextField } from '@mui/material'
+
 
 const AutocompleteContainer = styled.div`
   position: relative;
@@ -13,7 +13,6 @@ const AutocompleteContainer = styled.div`
 `;
 
 const SuggestionsBox = styled.div`
-  max-height: 300px;
   overflow-y: auto;
   position: fixed;
   background-color: white;
@@ -161,34 +160,14 @@ class ControlAutoComplete extends Component {
         const { query, data, selectedIndex, boxStyle, loading, nothing } = this.state
 
         return (
-            <AutocompleteContainer>
+        <AutocompleteContainer>
+            <>
                 <TextField
-                    inputRef={this.inputRef}
+                    ref={this.inputRef}
                     name="password"
                     label={label}
                     variant="filled"
-                    slotProps={{
-                        inputLabel: { shrink: true },
-                        input: {
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    {loading ? (
-                                        <IconButton size="small" edge="end" disabled>
-                                        <i className="ri-loader-4-line spin" style={{ fontSize: 20 }} />
-                                        </IconButton>
-                                    ) : value ? (
-                                        <IconButton size="small" edge="end" onClick={this.handleClear} aria-label="clear input">
-                                        <i className="ri-close-line" style={{ fontSize: 20 }} />
-                                        </IconButton>
-                                    ) : (
-                                        <IconButton size="small" edge="end" aria-label="search icon" onClick={this.handleSearch}>
-                                        <i className="ri-search-line" style={{ fontSize: 20 }} />
-                                        </IconButton>
-                                    )}
-                                </InputAdornment>
-                            )
-                        }
-                    }}
+                    slotProps={{ inputLabel: { shrink: true }}}
                     placeholder={!value ? '' : text(value)}
                     value={query}
                     type={'text'}
@@ -202,19 +181,56 @@ class ControlAutoComplete extends Component {
                         opacity: 1, // para garantir que fique visível (por padrão é 0.42 no MUI)
                         }
                     }}
+                    InputProps={{
+                        endAdornment: (
+                        <InputAdornment position="end">
+                            {loading ? (
+                                <IconButton size="small" edge="end" disabled>
+                                <i className="ri-loader-4-line spin" style={{ fontSize: 20 }} />
+                                </IconButton>
+                            ) : value ? (
+                                <IconButton size="small" edge="end" onClick={this.handleClear} aria-label="clear input">
+                                <i className="ri-close-line" style={{ fontSize: 20 }} />
+                                </IconButton>
+                            ) : (
+                                <IconButton size="small" edge="end" aria-label="search icon" onClick={this.handleSearch}>
+                                <i className="ri-search-line" style={{ fontSize: 20 }} />
+                                </IconButton>
+                            )}
+                        </InputAdornment>
+                        )
+                    }}
                     error={this.props.error}
                     helperText={this.props.helperText}
                 />
+            </>
 
-                <SuggestionsBox ref={this.suggestionsBoxRef} style={{ display: _.size(data) || nothing ? 'block' : 'none', width: boxStyle.width ? `${boxStyle.width}px` : '100%' }} tabIndex={-1}>
-                    {_.map(data, (item, index) => (
-                        <Suggestion key={index} ref={index === selectedIndex ? this.selectedItemRef : null} className={index === selectedIndex ? 'selected' : ''} onClick={() => this.handleSuggestionClick(item)}>
-                            {typeof children === 'function' ? children(item) : null}
-                        </Suggestion>
-                    ))}
-                    {nothing && (<Nothing onClick={this.handleBlur}>Nenhum resultado encontrado!</Nothing>)}
-                </SuggestionsBox>
-            </AutocompleteContainer>
+            <SuggestionsBox
+            ref={this.suggestionsBoxRef}
+    style={{
+        display: _.size(data) || nothing ? 'block' : 'none',
+        width: boxStyle.width ? `${boxStyle.width}px` : '100%' // fallback
+    }}
+            tabIndex={-1}
+            >
+            {_.map(data, (item, index) => (
+                <Suggestion
+                key={index}
+                ref={index === selectedIndex ? this.selectedItemRef : null}
+                className={index === selectedIndex ? 'selected' : ''}
+                onClick={() => this.handleSuggestionClick(item)}
+                >
+                {typeof children === 'function' ? children(item) : null}
+                </Suggestion>
+            ))}
+
+            {nothing && (
+                <Nothing onClick={this.handleBlur}>
+                Nenhum resultado encontrado!
+                </Nothing>
+            )}
+            </SuggestionsBox>
+        </AutocompleteContainer>
         )
     }
 }

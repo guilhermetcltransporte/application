@@ -5,8 +5,7 @@ import Login from '@views/Login'
 import { getServerMode } from '@core/utils/serverHelpers'
 
 export const metadata = {
-  title: 'Login',
-  description: 'Login to your account'
+  title: `${process.env.TITLE} - Login`,
 }
 
 const LoginPage = async () => {
