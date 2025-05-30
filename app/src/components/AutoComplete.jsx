@@ -1,9 +1,12 @@
-import React, { Component, createRef, useRef } from 'react'
-import { FaSearch, FaSyncAlt } from 'react-icons/fa'
+'use client'
+
+import React, { Component, createRef } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash'
 import './AutoComplete.css'
 import { Message, toaster } from 'rsuite'
+import { IconButton, InputAdornment, TextField } from '@mui/material'
+
 
 const AutocompleteContainer = styled.div`
   position: relative;
@@ -35,10 +38,8 @@ const Nothing = styled.div`
   padding: 6px;
 `
 
-const Result = React.createContext()
-
-class AutoComplete extends Component {
-
+class ControlAutoComplete extends Component {
+  
   inputRef = createRef()
   suggestionsBoxRef = createRef()
   selectedItemRef = createRef()
@@ -155,55 +156,87 @@ class AutoComplete extends Component {
   }
 
   render() {
-
     const { label, text, value, children, autoFocus } = this.props
-    const { query, data, selectedIndex, boxStyle, loading } = this.state
+    const { query, data, selectedIndex, boxStyle, loading, nothing } = this.state
 
     return (
       <AutocompleteContainer>
-        <div className="textfield-filled right-inner-addon">
-          <span className="right">
-            {loading ? (
-              <FaSyncAlt className='animated rotate' color='#696969' />
-            ) : value ? (
-              <div style={{ cursor: 'pointer' }} onClick={this.handleClear}>&#x2715;</div>
-            ) : (
-              <FaSearch style={{ cursor: 'pointer' }} onClick={this.handleSearch} />
-            )}
-          </span>
-          <input
-            ref={this.inputRef}
-            className='input-search'
-            placeholder={!value ? '' : text(value)}
-            value={query}
-            onChange={this.handleInputChange}
-            onKeyDown={this.handleKeyDown}
-            onBlur={this.handleBlur}
-            autoFocus={autoFocus}
-          />
-          <span>{label}</span>
+        <div>
+            {/*
+            <span className="right">
+                {loading ? (
+                <span className='spinner'>⏳</span> // Ícone de carregamento
+                ) : value ? (
+                <div style={{ cursor: 'pointer' }} onClick={this.handleClear}>&#x2715;</div>
+                ) : (
+                <div style={{ cursor: 'pointer' }} onClick={this.handleSearch}>🔍</div>
+                )}
+            </span>
+            
+            <input
+                ref={this.inputRef}
+                //className='input-search'
+                placeholder={!value ? '' : text(value)}
+                value={query}
+                onChange={this.handleInputChange}
+                onKeyDown={this.handleKeyDown}
+                onBlur={this.handleBlur}
+                autoFocus={autoFocus}
+            />
+            */}
+            <TextField
+                name="password"
+                label={label}
+                variant="filled"
+                slotProps={{ inputLabel: { shrink: true }}}
+                type={'text'}
+                fullWidth
+                onChange={this.handleInputChange}
+                onKeyDown={this.handleKeyDown}
+                onBlur={this.handleBlur}
+                InputProps={{
+                    endAdornment: (
+                    <InputAdornment position="end">
+                        <IconButton size='small' edge="end">
+                        <i className={'ri-search-line'} />
+                        </IconButton>
+                    </InputAdornment>
+                    )
+                }}
+                //helperText={<ErrorMessage name="password" />}
+                //error={!!errorState || (touched.password && Boolean(errors.password))}
+                //disabled={isSubmitting}
+            />
         </div>
-          <SuggestionsBox ref={this.suggestionsBoxRef} style={{ display: _.size(data) || this.state?.nothing ? 'block' : 'none', width: `${boxStyle.width}px` }} tabIndex={-1}>
-            {_.map(data, (item, index) => (
-              <Suggestion
-                key={index}
-                ref={index === selectedIndex ? this.selectedItemRef : null}
-                className={index === selectedIndex ? 'selected' : ''}
-                onClick={() => this.handleSuggestionClick(item)}
-              >
-                <Result.Provider value={item}>{children}</Result.Provider>
-              </Suggestion>
-            ))}
-            {this.state?.nothing && (
-              <Nothing onClick={this.handleBlur}>Nenhum resultado encontrado!</Nothing>
-            )}
-          </SuggestionsBox>
-        
+
+        <SuggestionsBox
+          ref={this.suggestionsBoxRef}
+  style={{
+    display: _.size(data) || nothing ? 'block' : 'none',
+    width: boxStyle.width ? `${boxStyle.width}px` : '100%' // fallback
+  }}
+          tabIndex={-1}
+        >
+          {_.map(data, (item, index) => (
+            <Suggestion
+              key={index}
+              ref={index === selectedIndex ? this.selectedItemRef : null}
+              className={index === selectedIndex ? 'selected' : ''}
+              onClick={() => this.handleSuggestionClick(item)}
+            >
+              {typeof children === 'function' ? children(item) : null}
+            </Suggestion>
+          ))}
+
+          {nothing && (
+            <Nothing onClick={this.handleBlur}>
+              Nenhum resultado encontrado!
+            </Nothing>
+          )}
+        </SuggestionsBox>
       </AutocompleteContainer>
     )
   }
 }
 
-AutoComplete.Result = Result.Consumer
-
-export const ControlAutoComplete = AutoComplete
+export const AutoComplete = ControlAutoComplete

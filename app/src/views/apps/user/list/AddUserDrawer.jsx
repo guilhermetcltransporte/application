@@ -16,6 +16,8 @@ import Divider from '@mui/material/Divider'
 
 // Third-party Imports
 import { useForm, Controller } from 'react-hook-form'
+import { AutoComplete } from '@/components/AutoComplete'
+import { getUser } from '@/utils/search'
 
 // Vars
 const initialData = {
@@ -92,6 +94,8 @@ const AddUserDrawer = props => {
       <Divider />
       <div className='p-5'>
         <form onSubmit={handleSubmit(data => onSubmit(data))} className='flex flex-col gap-5'>
+
+          {/*
           <Controller
             name='fullName'
             control={control}
@@ -107,7 +111,10 @@ const AddUserDrawer = props => {
                 {...(errors.fullName && { error: true, helperText: 'This field is required.' })}
               />
             )}
-          />
+          />*/}
+          <AutoComplete label='Usuário' value={this.state?.company} text={(item) => `${item.userName}`} onChange={(company) => this.setState({company})} onSearch={async (search) => await getUser(search)}>
+            {(item) => <span>{item.userName}</span>}
+          </AutoComplete>
           <div className='flex items-center gap-4'>
             <Button variant='contained' type='submit' color='success'>
               Confirmar
