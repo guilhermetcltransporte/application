@@ -20,6 +20,7 @@ import { AutoComplete } from '@/components/AutoComplete'
 import { getUser } from '@/utils/search'
 
 const AddUserDrawer = ({ open, handleClose, userData, setData }) => {
+  
   const [selectedUser, setSelectedUser] = useState(null)
 
   const initialValues = {
@@ -79,36 +80,19 @@ const AddUserDrawer = ({ open, handleClose, userData, setData }) => {
       <div className='p-5'>
         <Formik
           initialValues={{
-            fullName: '',
-            username: '',
-            email: '',
-            role: '',
-            plan: '',
-            status: '',
-            user: null // agora é parte do form
+            user: null
           }}
-          validationSchema={Yup.object({
-            fullName: Yup.string().required('Nome é obrigatório'),
-            user: Yup.object()
-              .nullable()
-              .required('Usuário é obrigatório')
-          })}
+          validationSchema={Yup.object({})}
           onSubmit={(values, { resetForm }) => {
+
             const newUser = {
-              id: (userData?.length && userData?.length + 1) || 1,
-              avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
-              fullName: values.fullName,
-              username: values.username,
-              email: values.email,
-              role: values.role,
-              currentPlan: values.plan,
-              status: values.status,
-              user: values.user // totalmente vindo do formik
+              user: values.user
             }
 
             setData([...(userData ?? []), newUser])
             handleClose()
             resetForm()
+
           }}
         >
           {({ values, errors, touched, handleChange, setFieldValue, setTouched }) => (
@@ -121,31 +105,15 @@ const AddUserDrawer = ({ open, handleClose, userData, setData }) => {
                 text={(item) => item?.userName}
                 onChange={(val) => {
                   setFieldValue('user', val)
-                  setTouched({ ...touched, user: true }) // marca como tocado
+                  setTouched({ ...touched, user: true })
                 }}
+                onBlur={() => setTouched({ ...touched, user: true })}
                 onSearch={getUser}
+                error={touched.user && Boolean(errors.user)}
+                helperText={touched.user && errors.user}
               >
                 {(item) => <span>{item.userName}</span>}
               </AutoComplete>
-
-              {/* Erro do AutoComplete */}
-              {touched.user && errors.user && (
-                <Typography variant='caption' color='error' sx={{ mt: -2 }}>
-                  {errors.user}
-                </Typography>
-              )}
-
-              <TextField
-                name='fullName'
-                label='Nome completo'
-                variant='filled'
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={values.fullName}
-                onChange={handleChange}
-                error={touched.fullName && Boolean(errors.fullName)}
-                helperText={touched.fullName && errors.fullName}
-              />
 
               <div className='flex items-center gap-4'>
                 <Button variant='contained' type='submit' color='success'>
