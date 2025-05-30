@@ -1,10 +1,9 @@
 'use client'
 
-import React, { Component, createRef } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash'
 import { IconButton, InputAdornment, TextField } from '@mui/material'
-
 
 const AutocompleteContainer = styled.div`
   position: relative;
@@ -13,12 +12,13 @@ const AutocompleteContainer = styled.div`
 `;
 
 const SuggestionsBox = styled.div`
-  overflow-y: auto;
-  position: fixed;
-  background-color: white;
-  z-index: 9999;
-  border: 1px solid #ccc;
-  border-top: none;
+    max-height: 300px;
+    overflow-y: auto;
+    position: fixed;
+    background-color: white;
+    z-index: 9999;
+    border: 1px solid #ccc;
+    border-top: none;
 `
 
 const Suggestion = styled.div`
@@ -35,204 +35,182 @@ const Nothing = styled.div`
   padding: 6px;
 `
 
-class ControlAutoComplete extends Component {
-    
-    inputRef = createRef()
-    suggestionsBoxRef = createRef()
-    selectedItemRef = createRef()
+export const AutoComplete = (props) => {
+  const inputRef = useRef()
+  const suggestionsBoxRef = useRef()
+  const selectedItemRef = useRef()
 
-    constructor(props) {
+  const [state, setState] = useState({
+    loading: false,
+    nothing: false,
+    data: [],
+    query: '',
+    selectedIndex: -1,
+    boxStyle: { width: 0 }
+  })
 
-    super(props)
-
-        this.state = {
-            loading: false,
-            nothing: false,
-            data: [],
-            query: '',
-            selectedIndex: -1,
-            boxStyle: { width: 0 }
-        }
-
+  const updatePosition = () => {
+    if (inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect()
+      setState(prev => ({ ...prev, boxStyle: { width: rect.width } }))
     }
+  }
 
-    componentDidMount() {
-        window.addEventListener('resize', this.updatePosition)
-        window.addEventListener('scroll', this.updatePosition)
-        document.addEventListener('mousedown', this.handleClickOutside)
-        this.updatePosition()
+  useEffect(() => {
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition)
+    document.addEventListener('mousedown', handleClickOutside)
+    updatePosition()
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition)
+      document.removeEventListener('mousedown', handleClickOutside)
     }
+  }, [])
 
-    componentWillUnmount() {
-        window.removeEventListener('resize', this.updatePosition)
-        window.removeEventListener('scroll', this.updatePosition)
-        document.removeEventListener('mousedown', this.handleClickOutside)
+  const handleSearch = async () => {
+    await handleInputChange()
+    inputRef.current.focus()
+  }
+
+  const handleInputChange = async (e) => {
+    try {
+      const query = e?.target?.value || ''
+      setState(prev => ({ ...prev, query, selectedIndex: 0, loading: true, nothing: false }))
+      const data = await props.onSearch(query)
+      setState(prev => ({ ...prev, data, nothing: _.size(data) === 0 }))
+    } catch (error) {
+      const errors = JSON.parse(error.message).erros
+      toaster.push(<Message type='error'><b>Mensagem</b><ul style={{ marginTop: '10px' }}>{_.map(errors || [], (message, key) => <li key={key}>{message}</li>)}</ul></Message>, { placement: 'topEnd', duration: 5000 })
+    } finally {
+      setState(prev => ({ ...prev, loading: false }))
     }
+  }
 
-    updatePosition = () => {
-        if (this.inputRef.current) {
-            const rect = this.inputRef.current.getBoundingClientRect()
-            this.setState({ boxStyle: { width: rect.width } })
-        }
-    }
+    const handleKeyDown = (e) => {
 
-    handleSearch = async () => {
-        await this.handleInputChange()
-        this.inputRef.current.focus()
-    }
-
-    handleInputChange = async (e) => {
-        try {
-
-            const query = e?.target?.value || ''
-
-            this.setState({ query, selectedIndex: 0, loading: true, nothing: false })
-            
-            const data = await this.props.onSearch(query)
-
-            this.setState({ data, nothing: _.size(data) == 0 })
-
-        } catch (error) {
-        const errors = JSON.parse(error.message).erros
-        toaster.push(<Message type='error'><b>Mensagem</b><ul style={{marginTop: '10px'}}>{_.map(errors || [], (message, key) => <li key={key}>{message}</li>)}</ul></Message>,{ placement: 'topEnd', duration: 5000 })
-        } finally {
-            this.setState({ loading: false })
-        }
-    }
-
-    handleKeyDown = (e) => {
-
-        const { selectedIndex, data } = this.state
+        const { selectedIndex, data } = state
 
         if (e.key === 'ArrowDown') {
-            this.setState(
-                (prevState) => ({ selectedIndex: Math.min(prevState.selectedIndex + 1, data.length - 1) }),
-                this.scrollToSelectedItem
-            )
+            e.preventDefault()
+            setState(prev => ({ ...prev, selectedIndex: Math.min(prev.selectedIndex + 1, data.length - 1) }))
+            scrollToSelectedItem()
         } else if (e.key === 'ArrowUp') {
-            this.setState(
-                (prevState) => ({ selectedIndex: Math.max(prevState.selectedIndex - 1, 0) }),
-                this.scrollToSelectedItem
-            )
+            e.preventDefault()
+            setState(prev => ({ ...prev, selectedIndex: Math.max(prev.selectedIndex - 1, 0) }))
+            scrollToSelectedItem()
         } else if (e.key === 'Enter' && selectedIndex !== -1) {
             e.preventDefault()
-            this.handleSuggestionClick(data[selectedIndex])
-            this.setState({ data: [] })
+            handleSuggestionClick(data[selectedIndex])
+            setState(prev => ({ ...prev, data: [] }))
         }
 
     }
 
-    scrollToSelectedItem = () => {
-        if (this.selectedItemRef.current && this.suggestionsBoxRef.current) {
-            this.selectedItemRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const scrollToSelectedItem = () => {
+        if (selectedItemRef.current && suggestionsBoxRef.current) {
+            selectedItemRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' })
         }
     }
 
-    handleBlur = () => {
-        setTimeout(() => this.setState({ query: '', data: [], nothing: false }), 200)
+    const handleBlur = () => {
+        setTimeout(() => setState(prev => ({ ...prev, query: '', data: [], nothing: false })), 200)
     }
 
-    handleClickOutside = (event) => {
+    const handleClickOutside = (event) => {
         if (
-            this.suggestionsBoxRef.current &&
-            !this.suggestionsBoxRef.current.contains(event.target) &&
-            this.inputRef.current &&
-            !this.inputRef.current.contains(event.target)
+            suggestionsBoxRef.current &&
+            !suggestionsBoxRef.current.contains(event.target) &&
+            inputRef.current &&
+            !inputRef.current.contains(event.target)
         ) {
-            this.setState({ query: '', data: [], nothing: false })
+            setState(prev => ({ ...prev, query: '', data: [], nothing: false }))
         }
-     }
-
-    handleSuggestionClick = (item) => {
-        this.props.onChange(item)
-        this.setState({ query: '', data: [], nothing: false })
     }
 
-    handleClear = () => {
-        this.setState({ query: '' })
-        this.props.onChange(null)
-        this.inputRef.current?.focus()
+    const handleSuggestionClick = (item) => {
+        props.onChange(item)
+        setState(prev => ({ ...prev, query: '', data: [], nothing: false }))
     }
 
-    render() {
-
-        const { label, text, value, children, autoFocus } = this.props
-        const { query, data, selectedIndex, boxStyle, loading, nothing } = this.state
-
-        return (
-        <AutocompleteContainer>
-            <>
-                <TextField
-                    ref={this.inputRef}
-                    name="password"
-                    label={label}
-                    variant="filled"
-                    slotProps={{ inputLabel: { shrink: true }}}
-                    placeholder={!value ? '' : text(value)}
-                    value={query}
-                    type={'text'}
-                    fullWidth
-                    onChange={this.handleInputChange}
-                    onKeyDown={this.handleKeyDown}
-                    onBlur={this.handleBlur}
-                    sx={{
-                        '& input::placeholder': {
-                        color: 'black',
-                        opacity: 1, // para garantir que fique visível (por padrão é 0.42 no MUI)
-                        }
-                    }}
-                    InputProps={{
-                        endAdornment: (
-                        <InputAdornment position="end">
-                            {loading ? (
-                                <IconButton size="small" edge="end" disabled>
-                                <i className="ri-loader-4-line spin" style={{ fontSize: 20 }} />
-                                </IconButton>
-                            ) : value ? (
-                                <IconButton size="small" edge="end" onClick={this.handleClear} aria-label="clear input">
-                                <i className="ri-close-line" style={{ fontSize: 20 }} />
-                                </IconButton>
-                            ) : (
-                                <IconButton size="small" edge="end" aria-label="search icon" onClick={this.handleSearch}>
-                                <i className="ri-search-line" style={{ fontSize: 20 }} />
-                                </IconButton>
-                            )}
-                        </InputAdornment>
-                        )
-                    }}
-                    error={this.props.error}
-                    helperText={this.props.helperText}
-                />
-            </>
-
-            <SuggestionsBox
-            ref={this.suggestionsBoxRef}
-    style={{
-        display: _.size(data) || nothing ? 'block' : 'none',
-        width: boxStyle.width ? `${boxStyle.width}px` : '100%' // fallback
-    }}
-            tabIndex={-1}
-            >
-            {_.map(data, (item, index) => (
-                <Suggestion
-                key={index}
-                ref={index === selectedIndex ? this.selectedItemRef : null}
-                className={index === selectedIndex ? 'selected' : ''}
-                onClick={() => this.handleSuggestionClick(item)}
-                >
-                {typeof children === 'function' ? children(item) : null}
-                </Suggestion>
-            ))}
-
-            {nothing && (
-                <Nothing onClick={this.handleBlur}>
-                Nenhum resultado encontrado!
-                </Nothing>
-            )}
-            </SuggestionsBox>
-        </AutocompleteContainer>
-        )
+    const handleClear = () => {
+        setState(prev => ({ ...prev, query: '' }))
+        props.onChange(null)
+        inputRef.current?.focus()
     }
+
+    const { label, text, value, children, autoFocus } = props
+    const { query, data, selectedIndex, boxStyle, loading, nothing } = state
+
+  return (
+    <AutocompleteContainer>
+      <TextField
+        ref={inputRef}
+        name="password"
+        label={label}
+        variant="filled"
+        slotProps={{ inputLabel: { shrink: true } }}
+        placeholder={!value ? '' : text(value)}
+        value={query}
+        type={'text'}
+        fullWidth
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        sx={{
+          '& input::placeholder': {
+            color: 'black',
+            opacity: 1
+          }
+        }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              {loading ? (
+                <IconButton size="small" edge="end" disabled>
+                  <i className="ri-loader-4-line spin" style={{ fontSize: 20 }} />
+                </IconButton>
+              ) : value ? (
+                <IconButton size="small" edge="end" onClick={handleClear} aria-label="clear input">
+                  <i className="ri-close-line" style={{ fontSize: 20 }} />
+                </IconButton>
+              ) : (
+                <IconButton size="small" edge="end" aria-label="search icon" onClick={handleSearch}>
+                  <i className="ri-search-line" style={{ fontSize: 20 }} />
+                </IconButton>
+              )}
+            </InputAdornment>
+          )
+        }}
+        error={props.error}
+        helperText={props.helperText}
+      />
+
+      <SuggestionsBox
+        ref={suggestionsBoxRef}
+        style={{
+          display: _.size(data) || nothing ? 'block' : 'none',
+          width: boxStyle.width ? `${boxStyle.width}px` : '100%'
+        }}
+        tabIndex={-1}
+      >
+        {_.map(data, (item, index) => (
+          <Suggestion
+            key={index}
+            ref={index === selectedIndex ? selectedItemRef : null}
+            className={index === selectedIndex ? 'selected' : ''}
+            onClick={() => handleSuggestionClick(item)}
+          >
+            {typeof children === 'function' ? children(item) : null}
+          </Suggestion>
+        ))}
+
+        {nothing && (
+          <Nothing onClick={handleBlur}>
+            Nenhum resultado encontrado!
+          </Nothing>
+        )}
+      </SuggestionsBox>
+    </AutocompleteContainer>
+  )
 }
-
-export const AutoComplete = ControlAutoComplete
