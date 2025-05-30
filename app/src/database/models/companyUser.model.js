@@ -24,4 +24,9 @@ export class CompanyUser {
     type: Sequelize.UUID
   }
 
+  isActive = {
+    field: 'isActive',
+    type: Sequelize.BOOLEAN
+  }
+
 }

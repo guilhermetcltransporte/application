@@ -49,6 +49,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddUserDrawer from '@/views/apps/user/list/AddUserDrawer'
+import { Stack, Tooltip } from '@mui/material'
 
 // Styled Components
 const Icon = styled('i')({})
@@ -182,17 +183,70 @@ export const Users = ({ users }) => {
       }),*/
       columnHelper.accessor('status', {
         header: 'Status',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            <Chip
-              variant='tonal'
-              label={'Ativo'}
-              size='small'
-              color={'success'}
-              className='capitalize'
-            />
-          </div>
-        )
+        cell: ({ row }) => {
+          const [status, setStatus] = useState(row.original.isActive)
+          const [hover, setHover] = useState(false)
+
+          const handleChangeStatus = (newStatus) => {
+            setStatus(newStatus)
+            if (typeof props.onStatusChange === 'function') {
+              props.onStatusChange(row.original.id, newStatus)
+            }
+          }
+
+          return (
+            <div
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
+              style={{ minWidth: 120 }} // para evitar “pular” layout no hover
+            >
+              {(status === true) && (
+                <Chip
+                  variant='tonal'
+                  label='Ativo'
+                  size='small'
+                  color='success'
+                  className='capitalize'
+                />
+              )}
+
+              {(status === false) && (
+                <Chip
+                  variant='tonal'
+                  label='Reprovado'
+                  size='small'
+                  color='error'
+                  className='capitalize'
+                />
+              )}
+
+              {(status == null) && !hover && (
+                <Chip
+                  variant='tonal'
+                  label='Pendente'
+                  size='small'
+                  color='warning'
+                  className='capitalize'
+                />
+              )}
+
+              {(status == null) && hover && (
+                <Stack direction="row" spacing={1}>
+                  <Tooltip title="Aprovar">
+                    <IconButton size="small" color="success" onClick={() => handleChangeStatus(true)}>
+                      <i className="ri-check-line" style={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Reprovar">
+                    <IconButton size="small" color="error" onClick={() => handleChangeStatus(false)}>
+                      <i className="ri-close-line" style={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              )}
+            </div>
+          )
+        }
       }),
       columnHelper.accessor('action', {
         header: '',
