@@ -24,6 +24,26 @@ export default async function Settings() {
     where: [{codigo_empresa_filial: session.company.codigo_empresa_filial}]
   })
 
-  return <ViewSettings company={company.dataValues} />
+  let users = await db.CompanyUser.findAll({
+    where: {
+      companyId: session.company.codigo_empresa_filial,
+    },
+    include: [{
+      model: db.User,
+      as: 'user',
+      attributes: ['userId', 'userName'],
+      include: [
+        {model: db.UserMember, as: 'userMember', attributes: ['email']}
+      ]
+    }],
+  })
+
+  users = users.map(record => {
+    const user = record.user?.dataValues || {}
+    user.userMember = user.userMember?.dataValues || null
+    return user
+  })
+
+  return <ViewSettings company={company.dataValues} users={users} />
 
 }

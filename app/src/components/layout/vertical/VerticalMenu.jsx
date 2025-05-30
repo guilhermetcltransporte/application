@@ -62,19 +62,23 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         renderExpandedMenuItemIcon={{ icon: <i className='ri-circle-fill' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <SubMenu
-          label={dictionary['navigation'].dashboards}
-          icon={<i className='ri-home-smile-line' />}
-          suffix={<Chip label='5' size='small' color='error' />}
-        >
+        {/*
+        <SubMenu label={dictionary['navigation'].dashboards} icon={<i className='ri-home-smile-line' />} suffix={<Chip label='5' size='small' color='error' />}>
           <MenuItem href={`/${locale}/dashboards/crm`}>{dictionary['navigation'].crm}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/analytics`}>{dictionary['navigation'].analytics}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/ecommerce`}>{dictionary['navigation'].eCommerce}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/academy`}>{dictionary['navigation'].academy}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/logistics`}>{dictionary['navigation'].logistics}</MenuItem>
         </SubMenu>
+        */}
+        <SubMenu
+          label="Finanças"
+          icon={<i className="ri-money-dollar-circle-line" />}
+        >
+          <MenuItem href={`/${locale}/finances/statements`}>Extratos</MenuItem>
+        </SubMenu>
         <MenuItem href={`/${locale}/settings`} icon={<i className='ri-settings-3-line' />}>
-          {dictionary['navigation'].settings}
+          Configurações
         </MenuItem>
         {/*
         <SubMenu label={dictionary['navigation'].frontPages} icon={<i className='ri-file-copy-line' />}>

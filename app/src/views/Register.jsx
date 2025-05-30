@@ -86,17 +86,38 @@ const Register = ({ mode }) => {
 
         <div className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-11 sm:mbs-14 md:mbs-0'>
           <div>
-            <Typography variant='h4'>Adventure starts here 🚀</Typography>
-            <Typography className='mbs-1'>Make your app management easy and fun!</Typography>
+            <Typography variant='h4'>A aventura começa aqui 🚀</Typography>
+            <Typography className='mbs-1'>Torne o gerenciamento do seu aplicativo fácil e divertido!</Typography>
           </div>
           <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
-            <TextField autoFocus fullWidth label='Username' />
-            <TextField fullWidth label='Email' />
+            <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='CNPJ' />
+            <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='Username' />
+            <TextField fullWidth variant='filled' slotProps={{ inputLabel: { shrink: true } }} label='Email' />
             <TextField
               fullWidth
+              variant='filled'
               label='Password'
               type={isPasswordShown ? 'text' : 'password'}
               slotProps={{
+                inputLabel: { shrink: true },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position='end'>
+                      <IconButton edge='end' onClick={handleClickShowPassword} onMouseDown={e => e.preventDefault()}>
+                        <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }
+              }}
+            />
+            <TextField
+              fullWidth
+              label='Password'
+              variant='filled'
+              type={isPasswordShown ? 'text' : 'password'}
+              slotProps={{
+                inputLabel: { shrink: true },
                 input: {
                   endAdornment: (
                     <InputAdornment position='end'>
@@ -113,23 +134,24 @@ const Register = ({ mode }) => {
                 control={<Checkbox />}
                 label={
                   <>
-                    <span>I agree to </span>
+                    <span>Concordo com a </span>
                     <Link className='text-primary' href='/' onClick={e => e.preventDefault()}>
-                      privacy policy & terms
+                      política de privacidade e os termos
                     </Link>
                   </>
                 }
               />
             </div>
             <Button fullWidth variant='contained' type='submit'>
-              Sign Up
+              Cadastrar-se
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography>Already have an account?</Typography>
+              <Typography>Já tem uma conta ?</Typography>
               <Typography component={Link} href='/login' color='primary.main'>
-                Sign in instead
+                Em vez disso, faça login
               </Typography>
             </div>
+            {/*
             <Divider className='gap-3 text-textPrimary'>or</Divider>
             <div className='flex justify-center items-center gap-2'>
               <IconButton size='small' className='text-facebook'>
@@ -144,7 +166,7 @@ const Register = ({ mode }) => {
               <IconButton size='small' className='text-googlePlus'>
                 <i className='ri-google-fill' />
               </IconButton>
-            </div>
+            </div>*/}
           </form>
         </div>
       </div>

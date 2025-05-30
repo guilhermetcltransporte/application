@@ -59,7 +59,7 @@ export const Company = ({company}) => {
         <Card>
           <CardContent className='mbe-5'>
             <div className='flex max-sm:flex-col items-center gap-6'>
-              <img height={100} width={100} className='rounded' src={'/images/avatars/1.png'} alt='Profile' />
+              <img height={75} width={75} className='rounded' src={'/images/avatars/1.png'} alt='Profile' />
               <div className='flex flex-grow flex-col gap-4'>
                 <div className='flex flex-col sm:flex-row gap-4'>
                   <Button component='label' variant='text' htmlFor='account-settings-upload-image'>
@@ -83,66 +83,72 @@ export const Company = ({company}) => {
             >
               {({ isSubmitting, errors, touched }) => (
                 <Form>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 3 }}>
-                      <Field name="cnpj">
-                        {({ field }) => (
-                          <TextField
-                            {...field}
-                            fullWidth
-                            label="CNPJ"
-                            variant="filled"
-                            error={!!errors.cnpj && touched.cnpj}
-                            helperText={touched.cnpj && errors.cnpj}
-                          />
-                        )}
-                      </Field>
+                  <fieldset disabled={isSubmitting}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, sm: 3 }}>
+                        <Field name="cnpj">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              label="CNPJ"
+                              variant="filled"
+                              error={!!errors.cnpj && touched.cnpj}
+                              helperText={touched.cnpj && errors.cnpj}
+                            />
+                          )}
+                        </Field>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4.5 }}>
+                        <Field name="name">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              label="Razão social"
+                              variant="filled"
+                              error={!!errors.name && touched.name}
+                              helperText={touched.name && errors.name}
+                            />
+                          )}
+                        </Field>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4.5 }}>
+                        <Field name="surname">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              label="Nome fantasia"
+                              variant="filled"
+                              error={!!errors.surname && touched.surname}
+                              helperText={touched.surname && errors.surname}
+                            />
+                          )}
+                        </Field>
+                      </Grid>
+
+                      <div className="divider"></div>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Button
+                          variant="contained"
+                          type="submit"
+                          disabled={isSubmitting}
+                          startIcon={
+                            <i
+                              className={isSubmitting ? 'ri-loader-4-line spin' : 'ri-check-line'}
+                            />
+                          }
+                        >
+                          {isSubmitting ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                      </Grid>
+                      
                     </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4.5 }}>
-                      <Field name="name">
-                        {({ field }) => (
-                          <TextField
-                            {...field}
-                            fullWidth
-                            label="Razão social"
-                            variant="filled"
-                            error={!!errors.name && touched.name}
-                            helperText={touched.name && errors.name}
-                          />
-                        )}
-                      </Field>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4.5 }}>
-                      <Field name="surname">
-                        {({ field }) => (
-                          <TextField
-                            {...field}
-                            fullWidth
-                            label="Nome fantasia"
-                            variant="filled"
-                            error={!!errors.surname && touched.surname}
-                            helperText={touched.surname && errors.surname}
-                          />
-                        )}
-                      </Field>
-                    </Grid>
-
-                    <div className="divider"></div>
-
-                    <Grid size={{ xs: 12 }}>
-                      <Button
-                        variant="contained"
-                        type="submit"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? 'Salvando...' : 'Salvar'}
-                      </Button>
-                    </Grid>
-                    
-                  </Grid>
-
+                  </fieldset>
                 </Form>
               )}
             </Formik>

@@ -229,7 +229,7 @@ const Login = ({ mode }) => {
                   <div className='flex justify-center items-center flex-wrap gap-2'>
                     <Typography>Ainda não possui uma conta ?</Typography>
                     <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
-                      Cadastra-se
+                      Cadastre-se
                     </Typography>
                   </div>
 

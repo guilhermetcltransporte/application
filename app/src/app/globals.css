@@ -131,3 +131,18 @@ code {
   background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
   border: 0;
 }
+
+.spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  font-size: 1.25rem; /* Ajuste opcional */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

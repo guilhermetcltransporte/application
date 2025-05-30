@@ -15,39 +15,39 @@ import TabPanel from '@mui/lab/TabPanel'
 import CustomTabList from '@core/components/mui/TabList'
 
 import { Company } from './company'
+import UserListCards from '../apps/user/list/UserListCards'
+import UserList from '../apps/user/list'
+import { Users } from './users'
+import BillingPlans from './signature'
+import Security from '@views/pages/account-settings/security'
 
-const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
-const Signature = dynamic(() => import('@views/settings/signature'))
+//const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
+//const Signature = dynamic(() => import('@views/settings/signature'))
 const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
 const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
 
-export const ViewSettings = ({ company }) => {
+export const ViewSettings = ({ company, users }) => {
     
   // Vars
   const tabContentList = {
     'company': <Company company={company} />,
-    'users': <></>,
-    security: <SecurityTab />,
-    'billing-plans': <Signature />,
-    notifications: <NotificationsTab />,
+    'users': <Users users={users} />,
+    'security': <Security />,
+    'billing-plans': <></>, //<BillingPlans />,
+    'notifications': <NotificationsTab />,
     connections: <ConnectionsTab />
   }
 
-  // States
   const [activeTab, setActiveTab] = useState('company')
-
-  const handleChange = (event, value) => {
-    setActiveTab(value)
-  }
 
   return (
     <TabContext value={activeTab}>
       <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
-          <CustomTabList onChange={handleChange} variant='scrollable'>
+          <CustomTabList onChange={(event, value) => setActiveTab(value)} variant='scrollable'>
             <Tab label='Empresa' icon={<i className='ri-group-line' />} iconPosition='start' value='company' />
             <Tab label='Usuários' icon={<i className='ri-lock-2-line' />} iconPosition='start' value='users' />
-            <Tab label='Certificado' icon={<i className='ri-lock-2-line' />} iconPosition='start' value='security' />
+            <Tab label='Certificado' icon={<i className='ri-shield-check-line' />} iconPosition='start' value='security' />
             <Tab label='Assinatura' icon={<i className='ri-bookmark-line' />} iconPosition='start' value='billing-plans' />
             <Tab label='Notifications' icon={<i className='ri-notification-4-line' />} iconPosition='start' value='notifications' />
             <Tab label='Integrações' icon={<i className='ri-link-m' />} iconPosition='start' value='connections' />
