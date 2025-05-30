@@ -1,3 +1,4 @@
+/*
 import { PrismaClient } from '@prisma/client';
 
 function interpolateQuery(query, params) {
@@ -50,3 +51,4 @@ export class AppContext extends PrismaClient {
     });
   }
 }
+*/

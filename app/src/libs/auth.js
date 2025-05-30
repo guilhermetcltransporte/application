@@ -107,6 +107,17 @@ export const authOptions = {
             throw new Error(JSON.stringify({ status: 213, companyBusinessId: companyBusinesses[0].id, companyBusiness: companyBusinesses, companies: companyBusinesses[0]?.companies }))
           }
 
+          const selectedCompany = companyBusinesses[0]?.companies[0]
+          const companyUser = selectedCompany?.companyUsers?.[0]
+
+          if (_.isNil(companyUser?.isActive)) {
+            throw new Error(JSON.stringify({ status: 214, message: 'Usuário pendente de aprovação!' }))
+          }
+
+          if (companyUser.isActive === false) {
+            throw new Error(JSON.stringify({ status: 215, message: 'Usuário desativado!' }))
+          }
+
           return {
             user: user,
             company: companyBusinesses[0]?.companies[0]
@@ -133,15 +144,35 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user }) {
 
+      const db = new AppContext()
+
       if (user) {
         token.user = user.user
         token.company = user.company
       }
 
-      return token
+      if (token.user?.userId) {
 
+        const companyUser = await db.CompanyUser.findOne({
+          where: {
+            userId: token.user.userId,
+          },
+          attributes: ['isActive']
+        })
+
+        if (!companyUser || companyUser.isActive === false) {
+          return null
+        }
+      }
+
+      return token
     },
+
     async session({ session, token }) {
+      if (!token.user) {
+        // Token inválido, sem usuário - força logout
+        return null
+      }
 
       session.user = token.user
       session.company = token.company

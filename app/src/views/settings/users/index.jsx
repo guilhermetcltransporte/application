@@ -39,8 +39,8 @@ import { getInitials } from '@/utils/getInitials'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import AddUserDrawer from '@/views/apps/user/list/AddUserDrawer'
 import { getUsers, onApprove, onDisable, onDisapprove } from './index.controller'
+import { ViewUser } from './view.user'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value)
@@ -51,34 +51,42 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
 const columnHelper = createColumnHelper()
 
 export const Users = ({ initialUsers }) => {
-  const [addUserOpen, setAddUserOpen] = useState(false)
+
+  const [companyUserId, setCompanyUserId] = useState(undefined)
+
   const [rowSelection, setRowSelection] = useState({})
   const [users, setUsers] = useState([...initialUsers])
   const [globalFilter, setGlobalFilter] = useState('')
   const [hoveredRowId, setHoveredRowId] = useState(null)
   const [loadingStatus, setLoadingStatus] = useState({})
 
+  const fetchUsers = async () => {
+    const updatedUsers = await getUsers()
+    setUsers(updatedUsers)
+  }
+
   const handleApprove = async id => {
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
     await onApprove({ id })
-    const updatedUsers = await getUsers()
-    setUsers(updatedUsers)
+    await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
   }
 
   const handleDisapprove = async id => {
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
     await onDisapprove(id)
-    const updatedUsers = await getUsers()
-    setUsers(updatedUsers)
+    await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
+  }
+
+  const handleEdit = async id => {
+    setCompanyUserId(id)
   }
 
   const handleDisable = async id => {
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
     await onDisable({id})
-    const updatedUsers = await getUsers()
-    setUsers(updatedUsers)
+    await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
   }
 
@@ -179,27 +187,32 @@ export const Users = ({ initialUsers }) => {
 
         if (!isHovered) return null
 
-        if (status === true) {
-          return (
-            <Tooltip title="Desativar">
-              <IconButton size='small' onClick={() => handleDisable(id)}>
-                <i className='ri-user-unfollow-line text-textSecondary' />
+        return (
+          <div className="flex gap-2">
+            {/* Botão de editar */}
+            <Tooltip title="Editar">
+              <IconButton size="small" onClick={() => handleEdit(id)}>
+                <i className="ri-pencil-line text-textSecondary" />
               </IconButton>
             </Tooltip>
-          )
-        }
 
-        if (status === false) {
-          return (
-            <Tooltip title="Ativar">
-              <IconButton size='small' onClick={() => handleApprove(id)}>
-                <i className='ri-user-follow-line text-textSecondary' />
-              </IconButton>
-            </Tooltip>
-          )
-        }
+            {status === true && (
+              <Tooltip title="Desativar">
+                <IconButton size="small" onClick={() => handleDisable(id)}>
+                  <i className="ri-user-unfollow-line text-textSecondary" />
+                </IconButton>
+              </Tooltip>
+            )}
 
-        return null
+            {status === false && (
+              <Tooltip title="Ativar">
+                <IconButton size="small" onClick={() => handleApprove(id)}>
+                  <i className="ri-user-follow-line text-textSecondary" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </div>
+        )
       },
       enableSorting: false
     })
@@ -234,7 +247,7 @@ export const Users = ({ initialUsers }) => {
       <Card>
         <Divider />
         <div className='flex justify-between gap-4 p-5 flex-col items-start sm:flex-row sm:items-center'>
-          <Button variant='contained' onClick={() => setAddUserOpen(!addUserOpen)} className='max-sm:is-full'>
+          <Button variant='contained' onClick={() => setCompanyUserId(null)} className='max-sm:is-full'>
             Adicionar
           </Button>
         </div>
@@ -244,7 +257,7 @@ export const Users = ({ initialUsers }) => {
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id} colSpan={header.colSpan} style={{ minWidth: 70 }}>
+                    <th key={header.id} colSpan={header.colSpan} style={{ minWidth: 120 }}>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -286,7 +299,9 @@ export const Users = ({ initialUsers }) => {
           rowsPerPageOptions={[5, 10, 25, 50, 100]}
         />
       </Card>
-      <AddUserDrawer open={addUserOpen} toggle={() => setAddUserOpen(!addUserOpen)} />
+
+      <ViewUser companyUserId={companyUserId} onClose={() => setCompanyUserId(undefined)} onSubmit={fetchUsers} />
+
     </>
   )
 }

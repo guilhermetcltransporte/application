@@ -107,6 +107,16 @@ const Login = ({ mode }) => {
           return
         }
 
+        if (error.status === 214) {
+          setErrorState(error.message)
+          return
+        }
+
+        if (error.status === 215) {
+          setErrorState(error.message)
+          return
+        }
+
         setErrorState(error)
       }
 
@@ -254,6 +264,8 @@ const Login = ({ mode }) => {
                     <Typography>Informe a empresa</Typography>
                   </div>
 
+                  {errorState && (<Alert severity="warning">{errorState}</Alert>)}
+
                   <Field name="companyBusinessId">
                     {({ field, meta }) => (
                       <FormControl fullWidth variant="filled">
@@ -286,7 +298,7 @@ const Login = ({ mode }) => {
                         >
                           {companies.map((c, index) => (
                             <MenuItem key={index} value={c.codigo_empresa_filial}>
-                              {c.name}
+                              {c.surname}
                             </MenuItem>
                           ))}
                         </Select>

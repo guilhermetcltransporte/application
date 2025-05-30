@@ -1,13 +1,12 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // MUI Imports
 import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 
@@ -19,109 +18,81 @@ import * as Yup from 'yup'
 import { AutoComplete } from '@/components/AutoComplete'
 import { getUser } from '@/utils/search'
 
-const AddUserDrawer = ({ open, handleClose, userData, setData }) => {
-  
-  const [selectedUser, setSelectedUser] = useState(null)
+const AddUserDrawer = ({ userId, onClose, onSubmit }) => {
 
-  const initialValues = {
-    fullName: '',
-    username: '',
-    email: '',
-    role: '',
-    plan: '',
-    status: ''
-  }
+  const [shouldReset, setShouldReset] = useState(false)
 
-  const validationSchema = Yup.object({
-    fullName: Yup.string().required('Nome é obrigatório')
-    // Adicione outras validações se quiser
-  })
+  useEffect(() => {
 
-  const onSubmit = (values, { resetForm }) => {
-    const newUser = {
-      id: (userData?.length && userData?.length + 1) || 1,
-      avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
-      fullName: values.fullName,
-      username: values.username,
-      email: values.email,
-      role: values.role,
-      currentPlan: values.plan,
-      status: values.status,
-      user: selectedUser // usuário retornado do AutoComplete
+    setShouldReset(true)
+
+    if (userId) {
+      alert(userId)
     }
 
-    setData([...(userData ?? []), newUser])
-    handleClose()
-    setSelectedUser(null)
-    resetForm()
-  }
+  }, [userId])
 
-  const handleReset = () => {
-    handleClose()
-    setSelectedUser(null)
+  const handleSubmit = (values, { resetForm }) => {
+    onClose(onSubmit())
   }
 
   return (
     <Drawer
-      open={open}
+      open={userId !== undefined}
       anchor='right'
       variant='temporary'
-      onClose={handleReset}
       ModalProps={{ keepMounted: true }}
       sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
     >
       <div className='flex items-center justify-between pli-5 plb-4'>
         <Typography variant='h5'>Adicionar usuário</Typography>
-        <IconButton size='small' onClick={handleReset}>
+        <IconButton size='small' onClick={onClose}>
           <i className='ri-close-line text-2xl' />
         </IconButton>
       </div>
       <Divider />
       <div className='p-5'>
         <Formik
-          initialValues={{
-            user: null
-          }}
+          initialValues={{ user: null }}
           validationSchema={Yup.object({})}
-          onSubmit={(values, { resetForm }) => {
-
-            const newUser = {
-              user: values.user
-            }
-
-            setData([...(userData ?? []), newUser])
-            handleClose()
-            resetForm()
-
-          }}
+          onSubmit={handleSubmit}
         >
-          {({ values, errors, touched, handleChange, setFieldValue, setTouched }) => (
-            <Form className='flex flex-col gap-5'>
+          {({ values, errors, touched, handleChange, setFieldValue, setTouched, resetForm }) => {
 
-              {/* AutoComplete controlado pelo Formik */}
-              <AutoComplete
-                label='Usuário'
-                value={values.user}
-                text={(item) => item?.userName}
-                onChange={(val) => {
-                  setFieldValue('user', val)
-                  setTouched({ ...touched, user: true })
-                }}
-                onBlur={() => setTouched({ ...touched, user: true })}
-                onSearch={getUser}
-                error={touched.user && Boolean(errors.user)}
-                helperText={touched.user && errors.user}
-              >
-                {(item) => <span>{item.userName}</span>}
-              </AutoComplete>
+            useEffect(() => {
+              if (shouldReset) {
+                resetForm()
+                setShouldReset(false)
+              }
+            }, [shouldReset])
 
-              <div className='flex items-center gap-4'>
-                <Button variant='contained' type='submit' color='success'>
-                  Confirmar
-                </Button>
-              </div>
-            </Form>
-          )}
+            return (
+              <Form className='flex flex-col gap-5'>
+                {/* AutoComplete controlado pelo Formik */}
+                <AutoComplete
+                  label='Usuário'
+                  value={values.user}
+                  text={(item) => item?.userName}
+                  onChange={(val) => {
+                    setFieldValue('user', val)
+                    setTouched({ ...touched, user: true })
+                  }}
+                  onBlur={() => setTouched({ ...touched, user: true })}
+                  onSearch={getUser}
+                  error={touched.user && Boolean(errors.user)}
+                  helperText={touched.user && errors.user}
+                >
+                  {(item) => <span>{item.userName}</span>}
+                </AutoComplete>
+
+                <div className='flex items-center gap-4'>
+                  <Button variant='contained' type='submit' color='success'>
+                    Confirmar
+                  </Button>
+                </div>
+              </Form>
+            )
+          }}
         </Formik>
       </div>
     </Drawer>
