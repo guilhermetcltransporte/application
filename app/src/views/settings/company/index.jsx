@@ -93,6 +93,7 @@ export const Company = ({company}) => {
                               fullWidth
                               label="CNPJ"
                               variant="filled"
+                              slotProps={{ inputLabel: { shrink: true }}}
                               error={!!errors.cnpj && touched.cnpj}
                               helperText={touched.cnpj && errors.cnpj}
                             />
@@ -108,6 +109,7 @@ export const Company = ({company}) => {
                               fullWidth
                               label="Razão social"
                               variant="filled"
+                              slotProps={{ inputLabel: { shrink: true }}}
                               error={!!errors.name && touched.name}
                               helperText={touched.name && errors.name}
                             />
@@ -123,6 +125,7 @@ export const Company = ({company}) => {
                               fullWidth
                               label="Nome fantasia"
                               variant="filled"
+                              slotProps={{ inputLabel: { shrink: true }}}
                               error={!!errors.surname && touched.surname}
                               helperText={touched.surname && errors.surname}
                             />

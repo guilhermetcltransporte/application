@@ -21,9 +21,8 @@ const FooterContent = () => {
       className={classnames(verticalLayoutClasses.footerContent, 'flex items-center justify-between flex-wrap gap-4')}
     >
       <p>
-        <span className='text-textSecondary'>{`© ${new Date().getFullYear()}, Made with `}</span>
-        <span>{`❤️`}</span>
-        <span className='text-textSecondary'>{` by `}</span>
+        <span className='text-textSecondary'>{`© ${new Date().getFullYear()}`}</span>
+        <span className='text-textSecondary'>{` por `}</span>
         <Link href='https://pixinvent.com' target='_blank' className='text-primary capitalize'>
           Pixinvent
         </Link>

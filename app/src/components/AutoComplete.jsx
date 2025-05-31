@@ -100,6 +100,9 @@ export const AutoComplete = (props) => {
             e.preventDefault()
             handleSuggestionClick(data[selectedIndex])
             setState(prev => ({ ...prev, data: [] }))
+        }  else if (e.key === 'Escape') {
+            e.preventDefault()
+            setState(prev => ({ ...prev, data: [] }))
         }
     }
 
@@ -168,7 +171,7 @@ export const AutoComplete = (props) => {
                                     <i className="ri-loader-4-line spin" style={{ fontSize: 20 }} />
                                 </IconButton>
                             ) : value ? (
-                                <IconButton size="small" edge="end" onClick={handleClear} aria-label="clear input">
+                                <IconButton size="small" edge="end" onClick={handleClear} aria-label="clear input" disabled={props.disabled}>
                                     <i className="ri-close-line" style={{ fontSize: 20 }} />
                                 </IconButton>
                             ) : (
@@ -181,6 +184,7 @@ export const AutoComplete = (props) => {
                 }}
                 error={inputError || props.error}
                 helperText={inputHelperText || props.helperText}
+                disabled={props.disabled}
             />
 
             <SuggestionsBox

@@ -2,11 +2,11 @@ import Sequelize from 'sequelize';
 
 export class CompanyBusiness {
 
-  id = {
+  codigo_empresa = {
     field: 'codigo_empresa',
     primaryKey: true,
-    autoIcrement: true,
-    type: Sequelize.NUMBER
+    autoIncrement: true,
+    type: Sequelize.INTEGER
   }
 
   description = {

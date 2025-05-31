@@ -41,6 +41,7 @@ import { getInitials } from '@/utils/getInitials'
 import tableStyles from '@core/styles/table.module.css'
 import { getUsers, onApprove, onDisable, onDisapprove } from './index.controller'
 import { ViewUser } from './view.user'
+import { signOut, useSession } from 'next-auth/react'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value)
@@ -51,6 +52,9 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
 const columnHelper = createColumnHelper()
 
 export const Users = ({ initialUsers }) => {
+
+  const { data: session } = useSession()
+  
 
   const [companyUserId, setCompanyUserId] = useState(undefined)
 
@@ -65,29 +69,39 @@ export const Users = ({ initialUsers }) => {
     setUsers(updatedUsers)
   }
 
-  const handleApprove = async id => {
+  const handleApprove = async (id) => {
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
     await onApprove({ id })
     await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
   }
 
-  const handleDisapprove = async id => {
+  const handleDisapprove = async (id) => {
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
-    await onDisapprove(id)
+    await onDisapprove({ id })
     await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
   }
 
-  const handleEdit = async id => {
+  const handleEdit = async (id) => {
     setCompanyUserId(id)
   }
 
-  const handleDisable = async id => {
+  const handleDisable = async ({ id, userId }) => {
+
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
-    await onDisable({id})
+    await onDisable({ id })
+
+    const currentUserId = session?.user?.userId
+
+    if (userId === currentUserId) {
+      await signOut({ callbackUrl: '/login' })
+      return
+    }
+
     await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
+
   }
 
   const columns = useMemo(() => [
@@ -183,6 +197,7 @@ export const Users = ({ initialUsers }) => {
       cell: ({ row }) => {
         const status = row.original.isActive
         const id = row.original.id
+        const userId = row.original.user.userId
         const isHovered = hoveredRowId === row.id
 
         if (!isHovered) return null
@@ -198,7 +213,7 @@ export const Users = ({ initialUsers }) => {
 
             {status === true && (
               <Tooltip title="Desativar">
-                <IconButton size="small" onClick={() => handleDisable(id)}>
+                <IconButton size="small" onClick={() => handleDisable({id, userId})}>
                   <i className="ri-user-unfollow-line text-textSecondary" />
                 </IconButton>
               </Tooltip>

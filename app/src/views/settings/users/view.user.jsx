@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import CircularProgress from '@mui/material/CircularProgress'
 import Backdrop from '@mui/material/Backdrop'
+import { toast } from 'react-toastify'
 
 // Third-party Imports
 import { Formik, Form } from 'formik'
@@ -20,8 +21,12 @@ import * as Yup from 'yup'
 import { AutoComplete } from '@/components/AutoComplete'
 import { getUser } from '@/utils/search'
 import { getCompanyUser, setCompanyUser } from './view.user.controller'
+import { Alert } from '@mui/material'
 
 export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
+
+  const [errorState, setErrorState] = useState(null)
+
   const [initialUser, setInitialUser] = useState(null)
   const [shouldReset, setShouldReset] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -30,27 +35,40 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
     const fetchUser = async () => {
       try {
 
+        setErrorState(null)
         setLoading(true)
         setShouldReset(true)
 
         if (companyUserId) {
           const userData = await getCompanyUser({ id: companyUserId })
           setInitialUser(userData?.user || null)
+        } else {
+          setInitialUser(null)
         }
 
       } catch (error) {
-        console.log(error)
+        setErrorState(error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchUser()
+
   }, [companyUserId])
 
-  const handleSubmit = async (values, { resetForm }) => {
-    const user = await setCompanyUser({ companyUserId, ...values })
-    onClose(onSubmit(user))
+  const handleSubmit = async (values) => {
+    try {
+      
+      await setCompanyUser({ companyUserId, ...values })
+
+      onClose(onSubmit())
+
+      toast.success('Salvo com sucesso!', { closeButton: true, theme: 'colored' })
+
+    } catch (error) {
+      setErrorState(error.message)
+    }
   }
 
   return (
@@ -77,7 +95,7 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
         sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
       >
         <div className='flex items-center justify-between pli-5 plb-4'>
-          <Typography variant='h5'>Adicionar usuário</Typography>
+          <Typography variant='h5'>{companyUserId ? 'Editar' : 'Adicionar'} usuário</Typography>
           <IconButton size='small' onClick={onClose}>
             <i className='ri-close-line text-2xl' />
           </IconButton>
@@ -92,7 +110,7 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
             validationSchema={Yup.object({})}
             onSubmit={handleSubmit}
           >
-            {({ values, errors, touched, setFieldValue, setTouched, resetForm }) => {
+            {({ values, errors, touched, setFieldValue, setTouched, resetForm, isSubmitting }) => {
               useEffect(() => {
                 if (shouldReset) {
                   resetForm()
@@ -102,6 +120,9 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
 
               return (
                 <Form className='flex flex-col gap-5'>
+
+                  {errorState && (<Alert severity="warning">{errorState}</Alert>)}
+
                   <AutoComplete
                     label='Usuário'
                     value={values.user}
@@ -114,6 +135,7 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
                     onSearch={getUser}
                     error={touched.user && Boolean(errors.user)}
                     helperText={touched.user && errors.user}
+                    disabled={companyUserId}
                   >
                     {(item) => <span>{item.userName}</span>}
                   </AutoComplete>
@@ -121,10 +143,11 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
                   <Divider />
 
                   <div className='flex items-center gap-4'>
-                    <Button variant='contained' type='submit' color='success'>
-                      Confirmar
+                    <Button type="submit" variant="contained" color='success' disabled={isSubmitting}>
+                      {isSubmitting ? `Salvando...` : `Confirmar`}
                     </Button>
                   </div>
+
                 </Form>
               )
             }}

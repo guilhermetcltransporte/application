@@ -41,6 +41,8 @@ const validationSchema = Yup.object().shape({
 
 const Login = ({ mode }) => {
 
+  const [initialUserName, setInitialUserName] = useState('')
+
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
   const [companyBusiness, setCompanyBusiness] = useState([])
@@ -149,8 +151,9 @@ const Login = ({ mode }) => {
         </div>
 
         <Formik
+          //initialValues={{ userName: initialUserName, password: '' }}
           initialValues={{
-            email: '',
+            email: initialUserName,
             password: '',
             companyBusinessId: '',
             companyId: ''

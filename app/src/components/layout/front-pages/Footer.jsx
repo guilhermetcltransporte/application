@@ -154,9 +154,8 @@ const Footer = () => {
           )}
         >
           <Typography className='text-white opacity-[0.92]' variant='body2'>
-            <span>{`© ${new Date().getFullYear()}, Made with `}</span>
-            <span>{`❤️`}</span>
-            <span>{` by `}</span>
+            <span>{`© ${new Date().getFullYear()}`}</span>
+            <span>{` por `}</span>
             <Link href='https://pixinvent.com/' target='_blank' className='font-medium text-white'>
               Pixinvent
             </Link>

@@ -42,6 +42,7 @@ const BadgeContentSpan = styled('span')({
 const UserDropdown = () => {
   // States
   const [open, setOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false) // novo estado para logout
 
   // Refs
   const anchorRef = useRef(null)
@@ -53,7 +54,7 @@ const UserDropdown = () => {
   const { lang: locale } = useParams()
 
   const handleDropdownOpen = () => {
-    !open ? setOpen(true) : setOpen(false)
+    setOpen(prev => !prev)
   }
 
   const handleDropdownClose = (event, url) => {
@@ -70,13 +71,13 @@ const UserDropdown = () => {
 
   const handleUserLogout = async () => {
     try {
-      // Sign out from the app
+      setIsLoggingOut(true) // ativar estado de logout
+
+      // Realiza o logout e redireciona
       await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL })
     } catch (error) {
       console.error(error)
-
-      // Show above error in a toast like following
-      // toastService.error((err as Error).message)
+      setIsLoggingOut(false) // desativa se ocorrer erro
     }
   }
 
@@ -90,7 +91,6 @@ const UserDropdown = () => {
         className='mis-2'
       >
         <Avatar
-          ref={anchorRef}
           alt={session?.user?.userName || ''}
           src={'/images/avatars/1.png'}
           onClick={handleDropdownOpen}
@@ -128,18 +128,6 @@ const UserDropdown = () => {
                     </div>
                   </div>
                   <Divider className='mlb-1' />
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
-                    <i className='ri-user-3-line' />
-                    <Typography color='text.primary'>My Profile</Typography>
-                  </MenuItem>
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/account-settings')}>
-                    <i className='ri-settings-4-line' />
-                    <Typography color='text.primary'>Settings</Typography>
-                  </MenuItem>
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/pricing')}>
-                    <i className='ri-money-dollar-circle-line' />
-                    <Typography color='text.primary'>Pricing</Typography>
-                  </MenuItem>
                   <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e, '/pages/faq')}>
                     <i className='ri-question-line' />
                     <Typography color='text.primary'>FAQ</Typography>
@@ -150,10 +138,11 @@ const UserDropdown = () => {
                       variant='contained'
                       color='error'
                       size='small'
-                      endIcon={<i className='ri-logout-box-r-line' />}
+                      startIcon={<i className='ri-logout-box-r-line' />}
                       onClick={handleUserLogout}
+                      disabled={isLoggingOut}
                     >
-                      Sair
+                      {isLoggingOut ? 'Saindo...' : 'Sair'}
                     </Button>
                   </div>
                 </MenuList>

@@ -70,10 +70,10 @@ export async function onDisapprove({id}) {
 
 }
 
-export async function onDisable({id}) {
+export async function onDisable({ id }) {
 
-    const db = new AppContext()
+  const db = new AppContext()
 
-    await db.CompanyUser.update({isActive: false}, {where: [{id}]})
+  await db.CompanyUser.update({isActive: false}, {where: [{ id }]})
 
 }

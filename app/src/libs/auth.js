@@ -5,7 +5,6 @@ import _ from 'lodash'
 import { Sequelize } from 'sequelize'
 
 export const authOptions = {
-  //adapter: PrismaAdapter(AppContext),
   providers: [
     CredentialProvider({
       name: 'Credentials',
@@ -26,14 +25,13 @@ export const authOptions = {
             ],
             where: Sequelize.literal(`"user"."userName" = :email OR "userMember"."email" = :email`),
             replacements: { email },
-            //transaction
           })
 
           if (_.isEmpty(user)) {
             throw new Error(JSON.stringify({ status: 201, message: 'Usuário não encontrado!' }))
           }
 
-          const data = JSON.stringify({ username: email, password: password })
+          const data = JSON.stringify({ username: user.userName, password: password })
           
           const config = {
             method: 'POST',
@@ -84,12 +82,11 @@ export const authOptions = {
                     required: true,
                   },
                 ],
-                attributes: ['codigo_empresa_filial', 'name', 'surname', 'companyBusinessId'],
+                attributes: ['codigo_empresa_filial', 'name', 'surname'],
               },
             ],
             order: [['companies', 'codigo_empresa_filial', 'ASC']],
           })
-
 
           if (_.size(companyBusinesses) == 0) {
             throw new Error(JSON.stringify({ status: 211, message: 'Nenhuma empresa encontrada!' }))
@@ -118,9 +115,13 @@ export const authOptions = {
             throw new Error(JSON.stringify({ status: 215, message: 'Usuário desativado!' }))
           }
 
+          let company = _.cloneDeep(companyBusinesses[0]?.companies[0].dataValues)
+
+          company.companyBusiness = companyBusinesses[0].dataValues
+
           return {
             user: user,
-            company: companyBusinesses[0]?.companies[0]
+            company: company
           }
 
         } catch (error) {
@@ -160,23 +161,17 @@ export const authOptions = {
           attributes: ['isActive']
         })
 
-        if (!companyUser || companyUser.isActive === false) {
-          return null
-        }
+        token.isActive = companyUser?.isActive
+
       }
 
       return token
+
     },
-
     async session({ session, token }) {
-      if (!token.user) {
-        // Token inválido, sem usuário - força logout
-        return null
-      }
-
       session.user = token.user
       session.company = token.company
-
+      session.isActive = token.isActive ?? false
       return session
     }
   }

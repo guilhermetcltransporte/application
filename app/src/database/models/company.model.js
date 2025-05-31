@@ -5,8 +5,7 @@ export class Company {
   codigo_empresa_filial = {
     field: 'codigo_empresa_filial',
     primaryKey: true,
-    autoIncrement: true,
-    type: Sequelize.NUMBER
+    type: Sequelize.INTEGER
   }
 
   cnpj = {

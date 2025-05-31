@@ -43,10 +43,6 @@ import { authOptions } from '@/libs/auth'
 } */
 const DashboardCRM = async () => {
 
-  const session = await getServerSession(authOptions)
-
-  console.log("session: ", session)
-
   // Vars
   const data = await getUserData()
   const serverMode = await getServerMode()
