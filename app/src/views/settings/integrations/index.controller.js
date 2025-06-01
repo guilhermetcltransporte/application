@@ -23,7 +23,7 @@ export async function getMyIntegrations() {
     const db = new AppContext()
 
     let companyIntegration = await db.CompanyIntegration.findAll({
-        attributes: ['id', 'isActive'],
+        attributes: ['id', 'options', 'isActive'],
         include: [
             { model: db.Integration, as: 'integration', attributes: ['id', 'name', 'description', 'icon'] }
         ],

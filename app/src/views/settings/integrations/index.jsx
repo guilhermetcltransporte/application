@@ -15,13 +15,15 @@ import Divider from '@mui/material/Divider'
 import CircularProgress from '@mui/material/CircularProgress'
 import { getIntegrations } from '../users/index.controller'
 import { getMyIntegrations, onDisconnect, onToggleActive } from './index.controller'
+import { PluginRenderer } from './plugins'
 
 const Integrations = ({ integrations }) => {
   const [connectedIntegrations, setConnectedIntegrations] = useState([])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedIntegration, setSelectedIntegration] = useState(null)
-  const [hoveredIntegration, setHoveredIntegration] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [hoveredIntegration, setHoveredIntegration] = useState(null)
+  const [disconnectingId, setDisconnectingId] = useState(null)
 
   const fetchMyIntegrations = async () => {
     setLoading(true)
@@ -40,22 +42,26 @@ const Integrations = ({ integrations }) => {
     fetchMyIntegrations()
   }, [])
 
-  // Placeholder para funções desconectar e toggle
-  const disconnectIntegration = async ({id}) => {
-    await onDisconnect({id})
-    await fetchMyIntegrations()
+  const disconnectIntegration = async ({ id }) => {
+    setDisconnectingId(id)
+    try {
+      await onDisconnect({ id })
+      setConnectedIntegrations((prev) => prev.filter((int) => int.id !== id))
+    } catch (error) {
+      console.error('Erro ao desconectar:', error)
+    } finally {
+      setDisconnectingId(null)
+    }
   }
 
   const handleToggleActive = async ({ id }) => {
-
     const integration = connectedIntegrations.find((int) => int.id === id)
+    if (!integration) return
 
-    const newIsActive = !integration?.isActive
+    const newIsActive = !integration.isActive
 
     try {
-
       await onToggleActive({ id, isActive: newIsActive })
-
       setConnectedIntegrations((prev) =>
         prev.map((int) =>
           int.id === id ? { ...int, isActive: newIsActive } : int
@@ -77,7 +83,7 @@ const Integrations = ({ integrations }) => {
   }
 
   const handleSave = () => {
-    // Aqui você pode implementar a lógica de salvar configurações/conexões
+    // Lógica de salvar configurações/conexões aqui
     setDrawerOpen(false)
     setSelectedIntegration(null)
   }
@@ -108,7 +114,12 @@ const Integrations = ({ integrations }) => {
                 md={4}
                 key={`connected-${integration.integration.name}`}
               >
-                <Card variant="outlined" sx={{ height: 150, display: 'flex' }}>
+                <Card
+                  variant="outlined"
+                  sx={{ height: 150, display: 'flex' }}
+                  onMouseEnter={() => setHoveredIntegration(integration.id)}
+                  onMouseLeave={() => setHoveredIntegration(null)}
+                >
                   <Box
                     component="img"
                     src={integration.integration.icon}
@@ -140,7 +151,6 @@ const Integrations = ({ integrations }) => {
                         {integration.integration.name}
                       </Typography>
                       <IconButton
-                        size="small"
                         color="primary"
                         title="Configurar integração"
                         onClick={() => handleConfigureClick(integration)}
@@ -160,54 +170,42 @@ const Integrations = ({ integrations }) => {
                       display="flex"
                       justifyContent="space-between"
                       alignItems="center"
-                      onMouseEnter={() =>
-                        setHoveredIntegration(integration.integration.name)
-                      }
-                      onMouseLeave={() => setHoveredIntegration(null)}
                     >
+                      {/* Botão desconectar só aparece sempre se estiver ativo */}
                       {integration.isActive ? (
-                        <>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => disconnectIntegration({ id: integration.id })}
+                          disabled={disconnectingId === integration.id}
+                        >
+                          {disconnectingId === integration.id
+                            ? 'Desconectando...'
+                            : 'Desconectar'}
+                        </Button>
+                      ) : (
+                        hoveredIntegration === integration.id ? (
                           <Button
                             variant="outlined"
                             color="error"
-                            onClick={() =>
-                              disconnectIntegration({id: integration.id})
-                            }
+                            onClick={() => disconnectIntegration({ id: integration.id })}
+                            disabled={disconnectingId === integration.id}
                           >
-                            Desconectar
+                            {disconnectingId === integration.id
+                              ? 'Desconectando...'
+                              : 'Desconectar'}
                           </Button>
-                          <Switch
-                            checked={integration.isActive}
-                            onChange={() =>
-                              handleToggleActive({id: integration.id})
-                            }
-                          />
-                        </>
-                      ) : (
-                        <>
-                          {hoveredIntegration === integration.integration.name ? (
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              onClick={() =>
-                                disconnectIntegration({id: integration.id})
-                              }
-                            >
-                              Desconectar
-                            </Button>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              Inativada
-                            </Typography>
-                          )}
-                          <Switch
-                            checked={integration.isActive}
-                            onChange={() =>
-                              handleToggleActive({id: integration.id})
-                            }
-                          />
-                        </>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
+                            Inativada
+                          </Typography>
+                        )
                       )}
+
+                      <Switch
+                        checked={integration.isActive}
+                        onChange={() => handleToggleActive({ id: integration.id })}
+                      />
                     </Box>
                   </Box>
                 </Card>
@@ -301,15 +299,8 @@ const Integrations = ({ integrations }) => {
               Configurar {selectedIntegration.name || selectedIntegration.integration?.name}
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <Box
-              component="img"
-              src={selectedIntegration.icon || selectedIntegration.integration?.icon}
-              alt={selectedIntegration.name || selectedIntegration.integration?.name}
-              sx={{ width: 80, height: 80, objectFit: 'contain', mb: 2 }}
-            />
-            <Typography variant="body1" mb={4}>
-              {selectedIntegration.description || selectedIntegration.integration?.description}
-            </Typography>
+            
+            <PluginRenderer pluginId={selectedIntegration.integration.id} componentName={'Settings'} data={selectedIntegration.options} />
 
             <Box display="flex" justifyContent="flex-end" gap={2}>
               <Button variant="outlined" onClick={handleClose}>

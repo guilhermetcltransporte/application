@@ -14,4 +14,9 @@ export class BankAccount {
     type: Sequelize.STRING
   }
 
+  companyIntegrationId = {
+    field: 'companyIntegrationId',
+    type: Sequelize.UUIDV4
+  }
+
 }

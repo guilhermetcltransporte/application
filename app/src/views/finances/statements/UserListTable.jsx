@@ -24,8 +24,13 @@ import {
 } from '@mui/material'
 import { AutoComplete } from '@/components/AutoComplete'
 import { getBankAccounts } from '@/utils/search'
+import { PluginRenderer } from '@/views/settings/integrations/plugins'
 
 export default function ExtratoScreen() {
+
+
+  const [integrationId, setIntegrationId] = useState(null)
+
   const [open, setOpen] = useState(false)
   const [uploadType, setUploadType] = useState(null)
   const [droppedFile, setDroppedFile] = useState(null)
@@ -40,13 +45,6 @@ export default function ExtratoScreen() {
     { id: 1, banco: 'Banco A', tipo: 'Integração Bancária', data: '2025-05-30' },
     { id: 2, banco: 'Banco B', tipo: 'Arquivo OFX', data: '2025-05-29' },
   ])
-
-  // Lista fake para integração bancária (para seleção)
-  const extratosIntegracao = [
-    { id: 101, banco: 'Banco A', descricao: 'Extrato Jan 2025', data: '2025-01-31' },
-    { id: 102, banco: 'Banco A', descricao: 'Extrato Fev 2025', data: '2025-02-28' },
-    { id: 103, banco: 'Banco B', descricao: 'Extrato Mar 2025', data: '2025-03-31' },
-  ]
 
   const handleClickUploadArea = () => {
     inputFileRef.current?.click()
@@ -74,7 +72,7 @@ export default function ExtratoScreen() {
       return
     }
 
-    if (uploadType === 'integracao' && !selectedExtrato) {
+    if (uploadType === 'integration' && !selectedExtrato) {
       alert('Selecione um extrato para continuar.')
       return
     }
@@ -88,7 +86,7 @@ export default function ExtratoScreen() {
     const newExtrato = {
       id: extratos.length + 1,
       banco: bancoInput,
-      tipo: uploadType === 'integracao' ? 'Integração Bancária' : 'Arquivo OFX',
+      tipo: uploadType === 'integration' ? 'Integração Bancária' : 'Arquivo OFX',
       data: new Date().toISOString().split('T')[0],
     }
     setExtratos((old) => [...old, newExtrato])
@@ -96,7 +94,7 @@ export default function ExtratoScreen() {
     // Resetar estados e fechar drawer
     setDroppedFile(null)
     setBancoInput('')
-    setUploadType('integracao')
+    setUploadType('integration')
     setSelectedExtrato(null)
     setOpen(false)
   }
@@ -179,7 +177,7 @@ export default function ExtratoScreen() {
                 setSelectedExtrato(null)
               }}
             >
-              <FormControlLabel value="integracao" control={<Radio />} label="Integração Bancária" />
+              <FormControlLabel value="integration" control={<Radio />} label="Integração Bancária" />
               <FormControlLabel value="ofx" control={<Radio />} label="Arquivo OFX" />
             </RadioGroup>
           </FormControl>
@@ -189,50 +187,19 @@ export default function ExtratoScreen() {
               label="Conta bancária"
               text={(item) => item?.agency}
               onSearch={getBankAccounts}
+              onChange={(bankAccount) => {
+                setIntegrationId(bankAccount.companyIntegration?.integrationId)
+              }}
             >
               {(item) => <span>{item.agency}</span>}
             </AutoComplete>
           </Box>
 
-          {uploadType === 'integracao' && (
+          {uploadType === 'integration' && (
             <>
-              <Typography fontWeight="bold">Selecione um extrato:</Typography>
 
-              <Paper variant="outlined" sx={{ maxHeight: 200, overflowY: 'auto' }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Banco</TableCell>
-                      <TableCell>Descrição</TableCell>
-                      <TableCell>Data</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {extratosIntegracao.map((item) => (
-                      <TableRow
-                        key={item.id}
-                        hover
-                        selected={selectedExtrato?.id === item.id}
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => setSelectedExtrato(item)}
-                      >
-                        <TableCell>{item.id}</TableCell>
-                        <TableCell>{item.banco}</TableCell>
-                        <TableCell>{item.descricao}</TableCell>
-                        <TableCell>{item.data}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
+              {integrationId && (<PluginRenderer pluginId={integrationId} componentName={'Statement'} data={{mensagem: 'data'}} />)}
 
-              {selectedExtrato && (
-                <Typography variant="body2">
-                  Selecionado: <strong>{selectedExtrato.descricao}</strong> do banco{' '}
-                  <strong>{selectedExtrato.banco}</strong>
-                </Typography>
-              )}
             </>
           )}
 
@@ -316,7 +283,7 @@ export default function ExtratoScreen() {
             variant="contained"
             disabled={
               (uploadType === 'ofx' && !droppedFile) ||
-              (uploadType === 'integracao' && !selectedExtrato)
+              (uploadType === 'integration' && !selectedExtrato)
             }
             onClick={handleEnviar}
           >
