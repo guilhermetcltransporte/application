@@ -20,7 +20,7 @@ import UserList from '../apps/user/list'
 import { Users } from './users'
 import BillingPlans from './signature'
 import Security from '@views/pages/account-settings/security'
-import Integrations from '@views/pages/account-settings/connections'
+import Integrations from '@/views/settings/integrations'
 
 //const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
 //const Signature = dynamic(() => import('@views/settings/signature'))
@@ -33,7 +33,7 @@ export const ViewSettings = ({ company, integrations }) => {
     'company': <Company company={company} />,
     'users': <Users />,
     'security': <Security />,
-    'billing-plans': <></>, //<BillingPlans />,
+    'billing-plans': <BillingPlans />,
     'notifications': <NotificationsTab />,
     connections: <Integrations integrations={integrations} />
   }

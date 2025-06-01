@@ -1,3 +1,5 @@
+"use client"
+
 // MUI Imports
 import Grid from '@mui/material/Grid2'
 
@@ -36,15 +38,15 @@ import { getPricingData, getInvoiceData } from '@/app/server/actions'
 
   return res.json()
 } */
-const BillingPlans = async () => {
+const BillingPlans = () => {
   // Vars
-  const data = await getPricingData()
-  const invoiceData = await getInvoiceData()
+  //const data = await getPricingData()
+  //const invoiceData = await getInvoiceData()
 
   return (
     <Grid container spacing={6}>
       <Grid size={{ xs: 12 }}>
-        <CurrentPlan data={data} />
+        <CurrentPlan />
       </Grid>
       {/*
       <Grid size={{ xs: 12 }}>

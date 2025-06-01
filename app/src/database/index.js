@@ -9,6 +9,7 @@ import { User } from './models/user.model.js'
 import { UserMember } from './models/userMember.model.js'
 import { BankAccount } from './models/bankAccount.model.js'
 import { Integration } from './models/integration.model.js'
+import { CompanyIntegration } from './models/companyIntegration.model.js'
 
 const afterFind = (result) => {
   const trimStrings = obj => {
@@ -33,6 +34,8 @@ export class AppContext extends Sequelize {
   Company = this.define('company', new Company(), { tableName: 'empresa_filial' })
 
   CompanyBusiness = this.define('companyBusiness', new CompanyBusiness(), { tableName: 'empresa' })
+
+  CompanyIntegration = this.define('companyIntegration', new CompanyIntegration(), { tableName: 'companyIntegration' })
 
   CompanyUser = this.define('companyUser', new CompanyUser(), { tableName: 'companyUser' })
 
@@ -67,6 +70,8 @@ export class AppContext extends Sequelize {
 
     this.CompanyBusiness.hasMany(this.Company, { as: 'companies', foreignKey: 'companyBusinessId' })
     
+    this.CompanyIntegration.belongsTo(this.Integration, { as: 'integration', foreignKey: 'integrationId' })
+
     this.CompanyUser.belongsTo(this.User, { as: 'user', foreignKey: 'userId' })
     this.CompanyUser.belongsTo(this.Company, { as: 'company', foreignKey: 'companyId' })
 
@@ -74,9 +79,13 @@ export class AppContext extends Sequelize {
     this.User.belongsTo(this.UserMember, { as: 'userMember', foreignKey: 'userId', targetKey: 'userId' })
 
 
+    this.BankAccout.addHook('afterFind', afterFind)
     this.Company.addHook('afterFind', afterFind)
     this.CompanyBusiness.addHook('afterFind', afterFind)
+    this.CompanyIntegration.addHook('afterFind', afterFind)
     this.CompanyUser.addHook('afterFind', afterFind)
+    this.Integration.addHook('afterFind', afterFind)
+    this.User.addHook('afterFind', afterFind)
     this.UserMember.addHook('afterFind', afterFind)
 
     /*

@@ -10,7 +10,7 @@ const AccountTab = dynamic(() => import('@views/pages/account-settings/account')
 const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
 const BillingPlansTab = dynamic(() => import('@views/pages/account-settings/billing-plans'))
 const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
-const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
+const ConnectionsTab = dynamic(() => import('@/views/settings/integrations'))
 
 // Vars
 const tabContentList = () => ({

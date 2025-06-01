@@ -9,7 +9,10 @@ import { AppContext } from '@/database'
 import { ViewSettings } from '@/views/settings'
 import _ from 'lodash'
 import { Sequelize } from 'sequelize'
-import { getCompany, getIntegrations, getUsers } from '@/views/settings/users/index.controller'
+
+import { getCompany } from '@/views/settings/index.controller'
+import { getIntegrations } from '@/views/settings/integrations/index.controller'
+
 
 export const metadata = {
   title: `${process.env.TITLE} - Configurações`,

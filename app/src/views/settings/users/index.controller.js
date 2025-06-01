@@ -6,22 +6,6 @@ import _ from "lodash"
 import { getServerSession } from "next-auth"
 import { Sequelize } from "sequelize"
 
-
-export async function getCompany() {
-
-  const session = await getServerSession(authOptions)
-
-  const db = new AppContext()
-
-  const company = await db.Company.findOne({
-    attributes: ['codigo_empresa_filial', 'cnpj', 'name', 'surname'],
-    where: [{codigo_empresa_filial: session.company.codigo_empresa_filial}]
-  })
-
-  return company.dataValues
-
-}
-
 export async function getUsers() {
 
   const session = await getServerSession(authOptions)
@@ -51,18 +35,6 @@ export async function getUsers() {
   })
 
   return _.map(users, (user) => user.get({ plain: true }))
-
-}
-
-export async function getIntegrations() {
-
-  const session = await getServerSession(authOptions)
-
-  const db = new AppContext()
-
-  let integrations = await db.Integration.findAll()
-
-  return _.map(integrations, (item) => item.get({ plain: true }))
 
 }
 
