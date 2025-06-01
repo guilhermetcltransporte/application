@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
@@ -40,13 +40,14 @@ const validationSchema = Yup.object().shape({
 })
 
 const Login = ({ mode }) => {
-
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
   const [companyBusiness, setCompanyBusiness] = useState([])
   const [companies, setCompanies] = useState([])
-  const [rememberMe, setRememberMe] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
   const [initialEmail, setInitialEmail] = useState('')
+
+  const passwordRef = useRef(null) // ref para o input senha
 
   const { settings } = useSettings()
   const router = useRouter()
@@ -82,7 +83,6 @@ const Login = ({ mode }) => {
 
   const handleLogin = async (values, { setSubmitting, setFieldValue }) => {
     try {
-
       setErrorState(null)
 
       const res = await signIn('credentials', { ...values, redirect: false })
@@ -136,7 +136,6 @@ const Login = ({ mode }) => {
       }
 
       setSubmitting(false)
-
     } catch (error) {
       console.log(error)
     }
@@ -144,9 +143,11 @@ const Login = ({ mode }) => {
 
   return (
     <div className='flex bs-full justify-center'>
-      <div className={classnames('flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden', {
-        'border-ie': settings.skin === 'bordered'
-      })}>
+      <div
+        className={classnames('flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden', {
+          'border-ie': settings.skin === 'bordered'
+        })}
+      >
         <div className='pli-6 max-lg:mbs-40 lg:mbe-24'>
           <img src={characterIllustration} alt='character-illustration' className='max-bs-[673px] max-is-full bs-auto' />
         </div>
@@ -171,7 +172,13 @@ const Login = ({ mode }) => {
           onSubmit={handleLogin}
         >
           {({ isSubmitting, values, handleChange, errors, touched, submitForm, setFieldValue }) => {
-            
+            // Focar o campo senha se email já estiver preenchido
+            useEffect(() => {
+              if (values.email && passwordRef.current) {
+                passwordRef.current.focus()
+              }
+            }, [values.email])
+
             useEffect(() => {
               if (values.companyBusinessId) {
                 submitForm()
@@ -180,161 +187,161 @@ const Login = ({ mode }) => {
                 submitForm()
               }
             }, [values.companyBusinessId, values.companyId])
-            
+
             return (
-            <Form className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
+              <Form className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
 
-              {_.size(companyBusiness) === 0 && _.size(companies) === 0 ? (
-                <>
-                  <div>
-                    <Typography variant='h4'>{`Bem-vindo ao ${themeConfig.templateName}! 👋🏻`}</Typography>
-                    <br></br>
-                    <Typography>Por favor, faça login na sua conta</Typography>
-                  </div>
-                  
-                  {errorState && (<Alert severity="warning">{errorState}</Alert>)}
+                {_.size(companyBusiness) === 0 && _.size(companies) === 0 ? (
+                  <>
+                    <div>
+                      <Typography variant='h4'>{`Bem-vindo ao ${themeConfig.templateName}! 👋🏻`}</Typography>
+                      <br></br>
+                      <Typography>Por favor, faça login na sua conta</Typography>
+                    </div>
 
-                  <Field
-                    as={TextField}
-                    name="email"
-                    label="Usuário"
-                    variant="filled"
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                    autoFocus
-                    onChange={(e) => {
-                      handleChange(e)
-                      setErrorState(null)
-                    }}
-                    helperText={<ErrorMessage name="email" />}
-                    error={!!errorState || (touched.email && Boolean(errors.email))}
-                    disabled={isSubmitting}
-                  />
+                    {errorState && <Alert severity='warning'>{errorState}</Alert>}
 
-                  <Field
-                    as={TextField}
-                    name="password"
-                    label="Password"
-                    variant="filled"
-                    InputLabelProps={{ shrink: true }}
-                    type={isPasswordShown ? 'text' : 'password'}
-                    fullWidth
-                    onChange={(e) => {
-                      handleChange(e)
-                      setErrorState(null)
-                    }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton onClick={handleClickShowPassword} edge="end">
-                            <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }}
-                    helperText={<ErrorMessage name="password" />}
-                    error={!!errorState || (touched.password && Boolean(errors.password))}
-                    disabled={isSubmitting}
-                  />
-
-                  <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={values.rememberMe}
-                          onChange={(e) => setFieldValue('rememberMe', e.target.checked)}
-                          disabled={isSubmitting}
-                        />
-                      }
-                      label='Lembrar'
+                    <Field
+                      as={TextField}
+                      name='email'
+                      label='Usuário'
+                      variant='filled'
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      autoFocus={!initialEmail} // Foco aqui só se não tiver email carregado
+                      onChange={e => {
+                        handleChange(e)
+                        setErrorState(null)
+                      }}
+                      helperText={<ErrorMessage name='email' />}
+                      error={!!errorState || (touched.email && Boolean(errors.email))}
+                      disabled={isSubmitting}
                     />
-                    <Typography component={Link} href={getLocalizedUrl('/forgot-password', locale)} color='primary.main'>
-                      Esqueceu sua senha ?
-                    </Typography>
-                  </div>
 
-                  <Button type="submit" fullWidth variant="contained" disabled={isSubmitting}>
-                    {isSubmitting ? `Entrando...` : `Entrar`}
-                  </Button>
+                    <Field
+                      as={TextField}
+                      name='password'
+                      label='Password'
+                      variant='filled'
+                      InputLabelProps={{ shrink: true }}
+                      type={isPasswordShown ? 'text' : 'password'}
+                      fullWidth
+                      onChange={e => {
+                        handleChange(e)
+                        setErrorState(null)
+                      }}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position='end'>
+                            <IconButton onClick={handleClickShowPassword} edge='end'>
+                              <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                            </IconButton>
+                          </InputAdornment>
+                        )
+                      }}
+                      helperText={<ErrorMessage name='password' />}
+                      error={!!errorState || (touched.password && Boolean(errors.password))}
+                      disabled={isSubmitting}
+                      inputRef={passwordRef} // Passa a ref aqui
+                    />
 
-                  <div className='flex justify-center items-center flex-wrap gap-2'>
-                    <Typography>Ainda não possui uma conta ?</Typography>
-                    <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
-                      Cadastre-se
-                    </Typography>
-                  </div>
+                    <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={values.rememberMe}
+                            onChange={e => setFieldValue('rememberMe', e.target.checked)}
+                            disabled={isSubmitting}
+                          />
+                        }
+                        label='Lembrar'
+                      />
+                      <Typography component={Link} href={getLocalizedUrl('/forgot-password', locale)} color='primary.main'>
+                        Esqueceu sua senha ?
+                      </Typography>
+                    </div>
 
-                  <Divider className='gap-3'>ou</Divider>
+                    <Button type='submit' fullWidth variant='contained' disabled={isSubmitting}>
+                      {isSubmitting ? `Entrando...` : `Entrar`}
+                    </Button>
 
-                  <Button
-                    color='secondary'
-                    className='self-center text-textPrimary'
-                    startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
-                    sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
-                    onClick={() => signIn('google')}
-                    disabled={isSubmitting}
-                  >
-                    Entrar com Google
-                  </Button>
+                    <div className='flex justify-center items-center flex-wrap gap-2'>
+                      <Typography>Ainda não possui uma conta ?</Typography>
+                      <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
+                        Cadastre-se
+                      </Typography>
+                    </div>
 
-                </>
-              ) : (
-                <>
-                  <div>
-                    <Typography variant='h4'>Próximo passo! 👇🏻</Typography>
-                    <Typography>Informe a empresa</Typography>
-                  </div>
+                    <Divider className='gap-3'>ou</Divider>
 
-                  {errorState && (<Alert severity="warning">{errorState}</Alert>)}
+                    <Button
+                      color='secondary'
+                      className='self-center text-textPrimary'
+                      startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
+                      sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
+                      onClick={() => signIn('google')}
+                      disabled={isSubmitting}
+                    >
+                      Entrar com Google
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Typography variant='h4'>Próximo passo! 👇🏻</Typography>
+                      <Typography>Informe a empresa</Typography>
+                    </div>
 
-                  <Field name="companyBusinessId">
-                    {({ field, meta }) => (
-                      <FormControl fullWidth variant="filled">
-                        <InputLabel id="companyBusiness-label">Empresa</InputLabel>
-                        <Select
-                          labelId="companyBusiness-label"
-                          {...field}
-                          error={meta.touched && Boolean(meta.error)}
-                          disabled={_.size(companyBusiness) == 1 || isSubmitting}
-                        >
-                          {companyBusiness.map((c, index) => (
-                            <MenuItem key={index} value={c.codigo_empresa}>
-                              {c.description}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    )}
-                  </Field>
+                    {errorState && <Alert severity='warning'>{errorState}</Alert>}
 
-                  <Field name="companyId">
-                    {({ field, meta }) => (
-                      <FormControl fullWidth variant="filled">
-                        <InputLabel id="company-label">Filial</InputLabel>
-                        <Select
-                          labelId="company-label"
-                          {...field}
-                          error={meta.touched && Boolean(meta.error)}
-                          disabled={!values.companyBusinessId || isSubmitting}
-                        >
-                          {companies.map((c, index) => (
-                            <MenuItem key={index} value={c.codigo_empresa_filial}>
-                              {c.surname}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    )}
-                  </Field>
+                    <Field name='companyBusinessId'>
+                      {({ field, meta }) => (
+                        <FormControl fullWidth variant='filled'>
+                          <InputLabel id='companyBusiness-label'>Empresa</InputLabel>
+                          <Select
+                            labelId='companyBusiness-label'
+                            {...field}
+                            error={meta.touched && Boolean(meta.error)}
+                            disabled={_.size(companyBusiness) == 1 || isSubmitting}
+                          >
+                            {companyBusiness.map((c, index) => (
+                              <MenuItem key={index} value={c.codigo_empresa}>
+                                {c.description}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
+                    </Field>
 
-                  <Button type="submit" fullWidth variant="contained" disabled={isSubmitting}>
-                    {isSubmitting ? `Aguarde...` : `Continuar`}
-                  </Button>
-                </>
-              )}
+                    <Field name='companyId'>
+                      {({ field, meta }) => (
+                        <FormControl fullWidth variant='filled'>
+                          <InputLabel id='company-label'>Filial</InputLabel>
+                          <Select
+                            labelId='company-label'
+                            {...field}
+                            error={meta.touched && Boolean(meta.error)}
+                            disabled={!values.companyBusinessId || isSubmitting}
+                          >
+                            {companies.map((c, index) => (
+                              <MenuItem key={index} value={c.codigo_empresa_filial}>
+                                {c.surname}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
+                    </Field>
 
-            </Form>
-          )}}
+                    <Button type='submit' fullWidth variant='contained' disabled={isSubmitting}>
+                      {isSubmitting ? `Aguarde...` : `Continuar`}
+                    </Button>
+                  </>
+                )}
+              </Form>
+            )
+          }}
         </Formik>
       </div>
     </div>
