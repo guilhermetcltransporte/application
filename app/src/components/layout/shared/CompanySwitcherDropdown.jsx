@@ -10,10 +10,8 @@ import Box from '@mui/material/Box'
 import { useSession } from 'next-auth/react'
 
 const CompanySwitcherDropdown = () => {
+  const session = useSession()
 
-    const session = useSession()
-
-  // Dados das empresas e filiais
   const companies = [
     {
       id: '1',
@@ -32,28 +30,23 @@ const CompanySwitcherDropdown = () => {
     }
   ]
 
-  // Estado inicial baseado na primeira empresa e sua primeira filial
   const [company, setCompany] = useState(companies[0])
   const [branch, setBranch] = useState(companies[0].branches[0])
 
-  // Controle do dropdown
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
   const handleOpen = (event) => setAnchorEl(event.currentTarget)
   const handleClose = () => setAnchorEl(null)
 
-  // Troca de empresa
   const handleChangeCompany = (newCompanyId) => {
     const selectedCompany = companies.find(c => c.id === newCompanyId)
     if (selectedCompany) {
       setCompany(selectedCompany)
-      // Seleciona a primeira filial da empresa automaticamente
       setBranch(selectedCompany.branches[0])
     }
     handleClose()
   }
 
-  // Troca de filial
   const handleChangeBranch = (newBranchId) => {
     const selectedBranch = company.branches.find(b => b.id === newBranchId)
     if (selectedBranch) {
@@ -62,20 +55,23 @@ const CompanySwitcherDropdown = () => {
     handleClose()
   }
 
+  const handleAddBranch = () => {
+    alert(`Cadastrar nova filial para a empresa: ${company.name}`)
+    handleClose()
+  }
+
   return (
     <>
-      <Box
-        className='flex items-center gap-2 cursor-pointer select-none'
-      >
+      <Box className="flex items-center gap-2 cursor-pointer select-none">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant='body1' fontWeight={600}>
-            {session.data.company.companyBusiness.description}
+          <Typography variant="body1" fontWeight={600}>
+            {session.data?.company?.companyBusiness?.description || company.name}
           </Typography>
-          <Typography variant='body1' sx={{ mx: 1 }}>
+          <Typography variant="body1" sx={{ mx: 1 }}>
             /
           </Typography>
-          <Typography variant='body1' color='text.secondary'>
-            {session.data.company.surname}
+          <Typography variant="body1" color="text.secondary">
+            {session.data?.company?.surname || branch.name}
           </Typography>
         </Box>
 
@@ -98,7 +94,7 @@ const CompanySwitcherDropdown = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <Typography variant='subtitle1' sx={{ px: 2, pt: 1 }}>
+        <Typography variant="subtitle1" sx={{ px: 2, pt: 1 }}>
           Empresa
         </Typography>
         {companies.map((c) => (
@@ -106,14 +102,29 @@ const CompanySwitcherDropdown = () => {
             key={c.id}
             selected={c.id === company.id}
             onClick={() => handleChangeCompany(c.id)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+              '&.Mui-selected': { backgroundColor: 'transparent' },
+              '&.Mui-selected:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+            }}
           >
-            {c.name}
+            <span>{c.name}</span>
+            {c.id === company.id && (
+              <i
+                className="ri-check-line"
+                style={{ fontSize: 20, color: '#1976d2' }}
+                aria-hidden="true"
+              />
+            )}
           </MenuItem>
         ))}
 
         <Box sx={{ borderTop: '1px solid', borderColor: 'divider', mt: 1 }} />
 
-        <Typography variant='subtitle1' sx={{ px: 2, pt: 1 }}>
+        <Typography variant="subtitle1" sx={{ px: 2, pt: 1 }}>
           Filial
         </Typography>
         {(company.branches || []).map((b) => (
@@ -121,10 +132,36 @@ const CompanySwitcherDropdown = () => {
             key={b.id}
             selected={b.id === branch.id}
             onClick={() => handleChangeBranch(b.id)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+              '&.Mui-selected': { backgroundColor: 'transparent' },
+              '&.Mui-selected:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+            }}
           >
-            {b.name}
+            <span>{b.name}</span>
+            {b.id === branch.id && (
+              <i
+                className="ri-check-line"
+                style={{ fontSize: 20, color: '#1976d2' }}
+                aria-hidden="true"
+              />
+            )}
           </MenuItem>
         ))}
+
+        <MenuItem
+          onClick={handleAddBranch}
+          sx={{
+            mt: 1,
+            fontWeight: 'bold',
+            color: '#1976d2',
+          }}
+        >
+          + Cadastrar Filial
+        </MenuItem>
       </Menu>
     </>
   )

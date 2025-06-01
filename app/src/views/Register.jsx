@@ -90,7 +90,6 @@ const Register = ({ mode }) => {
 
   const handleRegister = async (values, { setFieldError }) => {
     try {
-
       setErrorState(null)
       const exists = await checkUserExists(values.userName)
 
@@ -110,41 +109,34 @@ const Register = ({ mode }) => {
       })
 
       if (loginRes?.ok && !loginRes.error) {
-
         Swal.fire({
           icon: 'success',
           title: 'Cadastrado com sucesso!',
           text: 'Seja bem-vindo! Estamos felizes em ter você conosco.',
           confirmButtonText: 'Vamos lá 🚀',
-          confirmButtonColor: '#4CAF50',
+          confirmButtonColor: '#4CAF50'
         })
 
         router.replace('/')
-
       } else {
-
         if (JSON.parse(loginRes.error).status == 214) {
-
           Swal.fire({
             icon: 'info',
             title: 'Quase lá',
             text: 'Agora aguarde seu cadastro ser aprovado pela empresa!',
             confirmButtonText: 'OK',
-            confirmButtonColor: '#4CAF50',
+            confirmButtonColor: '#4CAF50'
           })
-          
+
           router.replace(`login`)
           return
         }
 
         setErrorState(loginRes.message)
-
       }
-
     } catch (error) {
       setErrorState(error.message)
     }
-
   }
 
   return (
@@ -355,15 +347,16 @@ const Register = ({ mode }) => {
                       <Button fullWidth variant='contained' type='submit' disabled={isSubmitting}>
                         {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
                       </Button>
-
-                      <div className='flex justify-center items-center flex-wrap gap-2'>
-                        <Typography>Já tem uma conta ?</Typography>
-                        <Typography component={Link} href='/login' color='primary.main'>
-                          Em vez disso, faça login
-                        </Typography>
-                      </div>
                     </>
                   )}
+
+                  {/* BLOCO SEMPRE VISÍVEL */}
+                  <div className='flex justify-center items-center flex-wrap gap-2'>
+                    <Typography>Já tem uma conta ?</Typography>
+                    <Typography component={Link} href='/login' color='primary.main'>
+                      Em vez disso, faça login
+                    </Typography>
+                  </div>
                 </Form>
               )
             }}

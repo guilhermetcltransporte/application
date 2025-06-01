@@ -246,7 +246,7 @@ const Login = ({ mode }) => {
                     </Typography>
                   </div>
 
-                  <Divider className='gap-3'>or</Divider>
+                  <Divider className='gap-3'>ou</Divider>
 
                   <Button
                     color='secondary'
@@ -256,7 +256,7 @@ const Login = ({ mode }) => {
                     onClick={() => signIn('google')}
                     disabled={isSubmitting}
                   >
-                    Sign in with Google
+                    Entrar com Google
                   </Button>
 
                 </>
@@ -280,7 +280,7 @@ const Login = ({ mode }) => {
                           disabled={_.size(companyBusiness) == 1 || isSubmitting}
                         >
                           {companyBusiness.map((c, index) => (
-                            <MenuItem key={index} value={c.id}>
+                            <MenuItem key={index} value={c.codigo_empresa}>
                               {c.description}
                             </MenuItem>
                           ))}
