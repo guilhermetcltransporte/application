@@ -2,12 +2,12 @@
 
 import { AppContext } from "@/database";
 
-export async function authorization() {
+export async function authorization({companyIntegrationId}) {
 
     const db = new AppContext()
 
     const companyIntegration = await db.CompanyIntegration.findOne({
-        //where: [{id}]
+        where: [{id: companyIntegrationId}]
     })
 
     let options = JSON.parse(companyIntegration.dataValues.options)
@@ -40,9 +40,9 @@ export async function authorization() {
 
 }
 
-export async function getStatement() {
+export async function getStatement({companyIntegrationId}) {
 
-    const token = await authorization()
+    const token = await authorization({companyIntegrationId})
 
     const response = await fetch('https://api.mercadopago.com/v1/account/release_report/list', {
         method: 'GET',

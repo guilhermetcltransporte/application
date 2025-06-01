@@ -22,7 +22,7 @@ export function getPluginById(id) {
   return pluginsById[id] || null
 }
 
-export const PluginRenderer = ({ pluginId, componentName, data }) => {
+export const PluginRenderer = ({ pluginId, componentName, data, onChange }) => {
 
   const plugin = getPluginById(pluginId)
 
@@ -33,6 +33,6 @@ export const PluginRenderer = ({ pluginId, componentName, data }) => {
   if (!ComponentToRender)
     return <div>Componente "{componentName}" não encontrado no plugin</div>
 
-  return <ComponentToRender data={data} />
+  return <ComponentToRender data={data} onChange={onChange} />
 
 }

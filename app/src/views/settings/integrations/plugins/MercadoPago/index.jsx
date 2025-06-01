@@ -19,19 +19,20 @@ import { fromZonedTime } from 'date-fns-tz'
 
 export const ID = 'A4B0DD1D-74E7-4B22-BFAA-0A911A419B88'
 
-export const Statement = ({ data }) => {
+export const Statement = ({ data, onChange }) => {
+
   const [statements, setStatements] = useState([])
   const [selectedExtrato, setSelectedExtrato] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetch()
+    fetch({companyIntegrationId: data.companyIntegrationId})
   }, [])
 
-  const fetch = async () => {
+  const fetch = async ({companyIntegrationId}) => {
     setLoading(true)
     try {
-      const statements = await getStatement()
+      const statements = await getStatement({companyIntegrationId})
       setStatements(statements)
     } catch (err) {
       console.error('Erro ao carregar extratos:', err)
@@ -86,7 +87,10 @@ export const Statement = ({ data }) => {
                   <TableRow
                     key={item.id}
                     hover
-                    onClick={() => setSelectedExtrato(item)}
+                    onClick={() => {
+                        setSelectedExtrato(item)
+                        onChange(item)
+                    }}
                     sx={{
                       cursor: 'pointer',
                       backgroundColor: isSelected ? 'rgba(25, 118, 210, 0.08)' : undefined,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Formik, Form, Field } from 'formik'
+import { Formik, Form } from 'formik'
 import * as yup from 'yup'
 
 import {
@@ -23,6 +23,7 @@ import {
   Paper,
   Radio,
 } from '@mui/material'
+
 import { AutoComplete } from '@/components/AutoComplete'
 import { getBankAccounts } from '@/utils/search'
 import { PluginRenderer } from '@/views/settings/integrations/plugins'
@@ -33,7 +34,6 @@ export default function ExtratoScreen() {
   const [isHovering, setIsHovering] = useState(false)
   const inputFileRef = useRef(null)
 
-  // Lista fake de extratos já existentes (tabela principal)
   const [extratos, setExtratos] = useState([
     { id: 1, banco: 'Banco A', tipo: 'Integração Bancária', data: '2025-05-30' },
     { id: 2, banco: 'Banco B', tipo: 'Arquivo OFX', data: '2025-05-29' },
@@ -99,7 +99,6 @@ export default function ExtratoScreen() {
           },
         }}
       >
-        {/* Cabeçalho */}
         <Box
           sx={{
             display: 'flex',
@@ -125,11 +124,11 @@ export default function ExtratoScreen() {
           }}
           validationSchema={validationSchema}
           onSubmit={(values, { resetForm }) => {
-            // Validações condicionais
             if (values.uploadType === 'integration' && !values.selectedExtrato) {
               alert('Selecione um extrato para continuar.')
               return
             }
+
             if (values.uploadType === 'ofx' && !values.droppedFile) {
               alert('Selecione ou arraste um arquivo OFX.')
               return
@@ -137,12 +136,12 @@ export default function ExtratoScreen() {
 
             const newExtrato = {
               id: extratos.length + 1,
-              banco: values.bancoInput,
+              banco: values.bankAccount?.agency || 'Desconhecido',
               tipo: values.uploadType === 'integration' ? 'Integração Bancária' : 'Arquivo OFX',
               data: new Date().toISOString().split('T')[0],
             }
-            setExtratos((old) => [...old, newExtrato])
 
+            setExtratos((old) => [...old, newExtrato])
             resetForm()
             setIntegrationId(null)
             setOpen(false)
@@ -206,9 +205,11 @@ export default function ExtratoScreen() {
               {values.uploadType === 'integration' && integrationId && (
                 <PluginRenderer
                   pluginId={integrationId}
-                  componentName={'Statement'}
-                  data={{ mensagem: 'data' }}
-                  // Se quiser integrar seleção do extrato, passe callback para setFieldValue('selectedExtrato', ...)
+                  componentName="Statement"
+                  data={{ companyIntegrationId: values.bankAccount.companyIntegration.id }}
+                  onChange={(item) => {
+                    setFieldValue('selectedExtrato', item)
+                  }}
                 />
               )}
 
@@ -221,7 +222,7 @@ export default function ExtratoScreen() {
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const file = e.target.files?.[0]
-                      if (file && file.name.endsWith('.ofx')) {
+                      if (file?.name.endsWith('.ofx')) {
                         setFieldValue('droppedFile', file)
                       }
                     }}
@@ -231,7 +232,7 @@ export default function ExtratoScreen() {
                     onDrop={(e) => {
                       e.preventDefault()
                       const file = e.dataTransfer.files?.[0]
-                      if (file && file.name.endsWith('.ofx')) {
+                      if (file?.name.endsWith('.ofx')) {
                         setFieldValue('droppedFile', file)
                       }
                       setIsHovering(false)
@@ -248,7 +249,6 @@ export default function ExtratoScreen() {
                       padding: 3,
                       textAlign: 'center',
                       cursor: 'pointer',
-                      userSelect: 'none',
                       backgroundColor: isHovering ? '#f5f5f5' : 'transparent',
                       transition: 'background-color 0.2s ease',
                     }}
@@ -289,7 +289,6 @@ export default function ExtratoScreen() {
                 </>
               )}
 
-              {/* Rodapé */}
               <Box
                 sx={{
                   pt: 3,
@@ -304,6 +303,8 @@ export default function ExtratoScreen() {
                   variant="contained"
                   disabled={
                     isSubmitting ||
+                    !values.uploadType ||
+                    !values.bankAccount ||
                     (values.uploadType === 'ofx' && !values.droppedFile) ||
                     (values.uploadType === 'integration' && !values.selectedExtrato)
                   }
