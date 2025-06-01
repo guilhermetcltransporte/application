@@ -41,12 +41,12 @@ const validationSchema = Yup.object().shape({
 
 const Login = ({ mode }) => {
 
-  const [initialUserName, setInitialUserName] = useState('')
-
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
   const [companyBusiness, setCompanyBusiness] = useState([])
   const [companies, setCompanies] = useState([])
+  const [rememberMe, setRememberMe] = useState(false)
+  const [initialEmail, setInitialEmail] = useState('')
 
   const { settings } = useSettings()
   const router = useRouter()
@@ -69,6 +69,15 @@ const Login = ({ mode }) => {
     borderedDarkIllustration
   )
 
+  useEffect(() => {
+    // Carregar email do localStorage, se existir
+    const savedEmail = localStorage.getItem('rememberedEmail')
+    if (savedEmail) {
+      setInitialEmail(savedEmail)
+      setRememberMe(true)
+    }
+  }, [])
+
   const handleClickShowPassword = () => setIsPasswordShown(prev => !prev)
 
   const handleLogin = async (values, { setSubmitting, setFieldValue }) => {
@@ -79,41 +88,34 @@ const Login = ({ mode }) => {
       const res = await signIn('credentials', { ...values, redirect: false })
 
       if (res?.error) {
-
         const error = JSON.parse(res.error)
 
         if (error.status === 201) {
           setErrorState(error.message)
           return
         }
-
         if (error.status === 202) {
           setErrorState(error.message)
           return
         }
-
         if (error.status === 211) {
           setErrorState(error.message)
           return
         }
-
         if (error.status === 212) {
           setCompanyBusiness(error.companyBusiness || [])
           return
         }
-
         if (error.status === 213) {
           setCompanyBusiness(error.companyBusiness || [])
           setCompanies(error.companies || [])
           setFieldValue('companyBusinessId', error.companyBusinessId)
           return
         }
-
         if (error.status === 214) {
           setErrorState(error.message)
           return
         }
-
         if (error.status === 215) {
           setErrorState(error.message)
           return
@@ -123,6 +125,12 @@ const Login = ({ mode }) => {
       }
 
       if (res?.ok && !res.error) {
+        // Se o checkbox lembrar estiver marcado, salva no localStorage, senão remove
+        if (values.rememberMe) {
+          localStorage.setItem('rememberedEmail', values.email)
+        } else {
+          localStorage.removeItem('rememberedEmail')
+        }
         const redirectURL = searchParams.get('redirectTo') ?? '/'
         router.replace(getLocalizedUrl(redirectURL, locale))
       }
@@ -151,17 +159,18 @@ const Login = ({ mode }) => {
         </div>
 
         <Formik
-          //initialValues={{ userName: initialUserName, password: '' }}
           initialValues={{
-            email: initialUserName,
+            email: initialEmail,
             password: '',
             companyBusinessId: '',
-            companyId: ''
+            companyId: '',
+            rememberMe: rememberMe
           }}
+          enableReinitialize={true}
           validationSchema={validationSchema}
           onSubmit={handleLogin}
         >
-          {({ isSubmitting, values, handleChange, errors, touched, submitForm }) => {
+          {({ isSubmitting, values, handleChange, errors, touched, submitForm, setFieldValue }) => {
             
             useEffect(() => {
               if (values.companyBusinessId) {
@@ -229,7 +238,16 @@ const Login = ({ mode }) => {
                   />
 
                   <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
-                    <FormControlLabel control={<Checkbox defaultChecked />} label='Lembrar' disabled={isSubmitting} />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={values.rememberMe}
+                          onChange={(e) => setFieldValue('rememberMe', e.target.checked)}
+                          disabled={isSubmitting}
+                        />
+                      }
+                      label='Lembrar'
+                    />
                     <Typography component={Link} href={getLocalizedUrl('/forgot-password', locale)} color='primary.main'>
                       Esqueceu sua senha ?
                     </Typography>
