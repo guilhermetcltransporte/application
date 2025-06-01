@@ -51,23 +51,31 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
 
 const columnHelper = createColumnHelper()
 
-export const Users = ({ initialUsers }) => {
-
-  const { data: session } = useSession()
-  
-
+export const Users = () => {
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadingStatus, setLoadingStatus] = useState({})
   const [companyUserId, setCompanyUserId] = useState(undefined)
-
   const [rowSelection, setRowSelection] = useState({})
-  const [users, setUsers] = useState([...initialUsers])
   const [globalFilter, setGlobalFilter] = useState('')
   const [hoveredRowId, setHoveredRowId] = useState(null)
-  const [loadingStatus, setLoadingStatus] = useState({})
+
+  const { data: session } = useSession()
 
   const fetchUsers = async () => {
     const updatedUsers = await getUsers()
     setUsers(updatedUsers)
   }
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      await fetchUsers()
+      setLoading(false)
+    }
+
+    load()
+  }, [])
 
   const handleApprove = async (id) => {
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
@@ -88,7 +96,6 @@ export const Users = ({ initialUsers }) => {
   }
 
   const handleDisable = async ({ id, userId }) => {
-
     setLoadingStatus(prev => ({ ...prev, [id]: true }))
     await onDisable({ id })
 
@@ -101,7 +108,6 @@ export const Users = ({ initialUsers }) => {
 
     await fetchUsers()
     setLoadingStatus(prev => ({ ...prev, [id]: false }))
-
   }
 
   const columns = useMemo(() => [
@@ -204,7 +210,6 @@ export const Users = ({ initialUsers }) => {
 
         return (
           <div className="flex gap-2">
-            {/* Botão de editar */}
             <Tooltip title="Editar">
               <IconButton size="small" onClick={() => handleEdit(id)}>
                 <i className="ri-pencil-line text-textSecondary" />
@@ -213,7 +218,7 @@ export const Users = ({ initialUsers }) => {
 
             {status === true && (
               <Tooltip title="Desativar">
-                <IconButton size="small" onClick={() => handleDisable({id, userId})}>
+                <IconButton size="small" onClick={() => handleDisable({ id, userId })}>
                   <i className="ri-user-unfollow-line text-textSecondary" />
                 </IconButton>
               </Tooltip>
@@ -252,7 +257,9 @@ export const Users = ({ initialUsers }) => {
   })
 
   const getAvatar = ({ avatar, fullName }) => {
-    return avatar ? <CustomAvatar src={avatar} skin='light' size={34} /> : (
+    return avatar ? (
+      <CustomAvatar src={avatar} skin='light' size={34} />
+    ) : (
       <CustomAvatar skin='light' size={34}>{getInitials(fullName)}</CustomAvatar>
     )
   }
@@ -266,57 +273,66 @@ export const Users = ({ initialUsers }) => {
             Adicionar
           </Button>
         </div>
+
         <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} colSpan={header.colSpan} style={{ minWidth: 120 }}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {table.getFilteredRowModel().rows.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>Nenhum dado disponível</td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table.getRowModel().rows.slice(0, table.getState().pagination.pageSize).map(row => (
-                  <tr
-                    key={row.id}
-                    className={classnames({ selected: row.getIsSelected() })}
-                    onMouseEnter={() => setHoveredRowId(row.id)}
-                    onMouseLeave={() => setHoveredRowId(null)}
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+          {loading ? (
+            <div className='flex justify-center items-center p-10'>
+              <CircularProgress />
+            </div>
+          ) : (
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} colSpan={header.colSpan} style={{ minWidth: 120 }}>
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
                     ))}
                   </tr>
                 ))}
-              </tbody>
-            )}
-          </table>
+              </thead>
+              {table.getFilteredRowModel().rows.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>Nenhum dado disponível</td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {table.getRowModel().rows.slice(0, table.getState().pagination.pageSize).map(row => (
+                    <tr
+                      key={row.id}
+                      className={classnames({ selected: row.getIsSelected() })}
+                      onMouseEnter={() => setHoveredRowId(row.id)}
+                      onMouseLeave={() => setHoveredRowId(null)}
+                    >
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
+          )}
         </div>
+
         <Divider />
-        <TablePagination
-          component='div'
-          count={table.getFilteredRowModel().rows.length}
-          page={table.getState().pagination.pageIndex}
-          onPageChange={(e, page) => table.setPageIndex(page)}
-          rowsPerPage={table.getState().pagination.pageSize}
-          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-          rowsPerPageOptions={[5, 10, 25, 50, 100]}
-        />
+        {!loading && (
+          <TablePagination
+            component='div'
+            count={table.getFilteredRowModel().rows.length}
+            page={table.getState().pagination.pageIndex}
+            onPageChange={(e, page) => table.setPageIndex(page)}
+            rowsPerPage={table.getState().pagination.pageSize}
+            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+            rowsPerPageOptions={[5, 10, 25, 50, 100]}
+          />
+        )}
       </Card>
 
       <ViewUser companyUserId={companyUserId} onClose={() => setCompanyUserId(undefined)} onSubmit={fetchUsers} />
-
     </>
   )
 }

@@ -143,11 +143,10 @@ export default function ExtratoScreen() {
         ModalProps={{ keepMounted: true }}
         sx={{
           '& .MuiDrawer-paper': {
-            width: { xs: 300, sm: 450 },
-            p: 2,
+            width: { xs: '100%', sm: 600 },
+            p: 6,
             display: 'flex',
             flexDirection: 'column',
-            gap: 2,
           },
         }}
       >
@@ -157,9 +156,7 @@ export default function ExtratoScreen() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            mb: 1,
-            pl: 1,
-            pr: 1,
+            mb: 2,
           }}
         >
           <Typography variant="h5">Novo Extrato</Typography>
@@ -168,27 +165,9 @@ export default function ExtratoScreen() {
           </IconButton>
         </Box>
 
-        <Divider />
+        <Divider sx={{ mb: 3 }} />
 
-        {/* Conteúdo */}
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', pt: 2 }}>
-          <AutoComplete
-            label='Conta bancária'
-            //value={values.user}
-            text={(item) => item?.agency}
-            //onChange={(val) => {
-            //  setFieldValue('user', val)
-            //  setTouched({ ...touched, user: true })
-            //}}
-            //onBlur={() => setTouched({ ...touched, user: true })}
-            onSearch={getBankAccounts}
-            //error={touched.user && Boolean(errors.user)}
-            //helperText={touched.user && errors.user}
-            //disabled={companyUserId}
-          >
-            {(item) => <span>{item.agency}</span>}
-          </AutoComplete>
-
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 4, gap: 3, overflowY: 'auto' }}>
           <FormControl>
             <FormLabel>Tipo de importação</FormLabel>
             <RadioGroup
@@ -200,21 +179,24 @@ export default function ExtratoScreen() {
                 setSelectedExtrato(null)
               }}
             >
-              <FormControlLabel
-                value="integracao"
-                control={<Radio />}
-                label="Integração Bancária"
-              />
+              <FormControlLabel value="integracao" control={<Radio />} label="Integração Bancária" />
               <FormControlLabel value="ofx" control={<Radio />} label="Arquivo OFX" />
             </RadioGroup>
           </FormControl>
 
-          {/* Aba integração bancária */}
+          <Box>
+            <AutoComplete
+              label="Conta bancária"
+              text={(item) => item?.agency}
+              onSearch={getBankAccounts}
+            >
+              {(item) => <span>{item.agency}</span>}
+            </AutoComplete>
+          </Box>
+
           {uploadType === 'integracao' && (
             <>
-              <Typography sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-                Selecione um extrato para continuar:
-              </Typography>
+              <Typography fontWeight="bold">Selecione um extrato:</Typography>
 
               <Paper variant="outlined" sx={{ maxHeight: 200, overflowY: 'auto' }}>
                 <Table size="small" stickyHeader>
@@ -246,7 +228,7 @@ export default function ExtratoScreen() {
               </Paper>
 
               {selectedExtrato && (
-                <Typography sx={{ mt: 2, fontWeight: 'medium' }}>
+                <Typography variant="body2">
                   Selecionado: <strong>{selectedExtrato.descricao}</strong> do banco{' '}
                   <strong>{selectedExtrato.banco}</strong>
                 </Typography>
@@ -254,7 +236,6 @@ export default function ExtratoScreen() {
             </>
           )}
 
-          {/* Aba OFX */}
           {uploadType === 'ofx' && (
             <>
               <input
@@ -274,7 +255,6 @@ export default function ExtratoScreen() {
                 onDragLeave={() => setIsHovering(false)}
                 onClick={handleClickUploadArea}
                 sx={{
-                  mt: 3,
                   border: '2px dashed #ccc',
                   borderRadius: 2,
                   padding: 3,
@@ -325,10 +305,11 @@ export default function ExtratoScreen() {
         {/* Rodapé */}
         <Box
           sx={{
-            pt: 2,
+            pt: 3,
             borderTop: '1px solid #ddd',
             display: 'flex',
             justifyContent: 'flex-end',
+            mt: 3,
           }}
         >
           <Button
@@ -343,6 +324,7 @@ export default function ExtratoScreen() {
           </Button>
         </Box>
       </Drawer>
+
     </>
   )
 }

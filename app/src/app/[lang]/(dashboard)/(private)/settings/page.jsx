@@ -9,7 +9,7 @@ import { AppContext } from '@/database'
 import { ViewSettings } from '@/views/settings'
 import _ from 'lodash'
 import { Sequelize } from 'sequelize'
-import { getCompany, getUsers } from '@/views/settings/users/index.controller'
+import { getCompany, getIntegrations, getUsers } from '@/views/settings/users/index.controller'
 
 export const metadata = {
   title: `${process.env.TITLE} - Configurações`,
@@ -18,11 +18,11 @@ export const metadata = {
 export default async function Settings() {
 
   const company = await getCompany()
-  const users = await getUsers()
+  const integrations = await getIntegrations()
 
   return <ViewSettings
     company={company}
-    initialUsers={users}
+    integrations={integrations}
   />
 
 }

@@ -133,21 +133,22 @@ export const authOptions = {
         }
       }
 
-      // Login via Credentials
       if (user) {
         token.user = user.user
         token.company = user.company
-        token.isActive = user.isActive
       }
 
-      // Sessão já existente
-      if (token.user?.userId && token.isActive === undefined) {
+      if (token.user?.userId) {
+
         const companyUser = await db.CompanyUser.findOne({
-          where: { userId: token.user.userId },
-          attributes: ['isActive'],
+          where: {
+            userId: token.user.userId,
+          },
+          attributes: ['isActive']
         })
 
         token.isActive = companyUser?.isActive
+
       }
 
       return token

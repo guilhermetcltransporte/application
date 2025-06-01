@@ -1,139 +1,250 @@
-// Next Imports
-import Link from 'next/link'
+'use client'
 
-// MUI Imports
+import { useState } from 'react'
+
+// MUI
+import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-import CardContent from '@mui/material/CardContent'
-import Grid from '@mui/material/Grid2'
-import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
 import Switch from '@mui/material/Switch'
+import Typography from '@mui/material/Typography'
+import Drawer from '@mui/material/Drawer'
+import Divider from '@mui/material/Divider'
 
-// Component Imports
-import CustomIconButton from '@core/components/mui/IconButton'
+const Integrations = ({integrations}) => {
 
-// Vars
-const connectedAccountsArr = [
-  {
-    checked: true,
-    title: 'Google',
-    logo: '/images/logos/google.png',
-    subtitle: 'Calendar and Contacts'
-  },
-  {
-    checked: false,
-    title: 'Slack',
-    logo: '/images/logos/slack.png',
-    subtitle: 'Communications'
-  },
-  {
-    checked: true,
-    title: 'Github',
-    logo: '/images/logos/github.png',
-    subtitle: 'Manage your Git repositories'
-  },
-  {
-    checked: true,
-    title: 'Mailchimp',
-    subtitle: 'Email marketing service',
-    logo: '/images/logos/mailchimp.png'
-  },
-  {
-    title: 'Asana',
-    checked: false,
-    subtitle: 'Task Communication',
-    logo: '/images/logos/asana.png'
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedIntegration, setSelectedIntegration] = useState(null)
+  const [hoveredIntegration, setHoveredIntegration] = useState(null)
+
+  /*
+  const disconnectIntegration = (name) => {
+    setIntegrations((prev) =>
+      prev.map((int) =>
+        int.name === name ? { ...int, connected: false, enabled: false } : int
+      )
+    )
   }
-]
 
-const socialAccountsArr = [
-  {
-    title: 'Facebook',
-    isConnected: false,
-    logo: '/images/logos/facebook.png'
-  },
-  {
-    title: 'Twitter',
-    isConnected: true,
-    username: '@Pixinvent',
-    logo: '/images/logos/twitter.png',
-    href: 'https://twitter.com/pixinvents'
-  },
-  {
-    title: 'Linkedin',
-    isConnected: true,
-    username: '@Pixinvent',
-    logo: '/images/logos/linkedin.png',
-    href: 'https://www.linkedin.com/in/pixinvent-creative-studio-561a4713b'
-  },
-  {
-    title: 'Dribbble',
-    isConnected: false,
-    logo: '/images/logos/dribbble.png'
-  },
-  {
-    title: 'Behance',
-    isConnected: false,
-    logo: '/images/logos/behance.png'
+  const toggleEnabled = (name) => {
+    setIntegrations((prev) =>
+      prev.map((int) =>
+        int.name === name ? { ...int, enabled: !int.enabled } : int
+      )
+    )
   }
-]
+  */
 
-const Connections = () => {
+  const handleConfigureClick = (integration) => {
+    setSelectedIntegration(integration)
+    setDrawerOpen(true)
+  }
+
+  const handleConnectClick = (integration) => {
+    setSelectedIntegration(integration)
+    setDrawerOpen(true)
+  }
+
+  const handleSave = () => {
+    if (selectedIntegration && !selectedIntegration.connected) {
+      /*setIntegrations((prev) =>
+        prev.map((int) =>
+          int.name === selectedIntegration.name
+            ? { ...int, connected: true, enabled: true }
+            : int
+        )
+      )*/
+    }
+    setDrawerOpen(false)
+    setSelectedIntegration(null)
+  }
+
+  const handleClose = () => {
+    setDrawerOpen(false)
+    setSelectedIntegration(null)
+  }
+
+  const connectedIntegrations = integrations.filter((i) => i.connected)
+
   return (
-    <Card>
-      <Grid container>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <CardHeader
-            title='Connected Accounts'
-            subheader='Display content from your connected accounts on your site'
-          />
-          <CardContent className='flex flex-col gap-4'>
-            {connectedAccountsArr.map((item, index) => (
-              <div key={index} className='flex items-center justify-between gap-4'>
-                <div className='flex flex-grow items-center gap-4'>
-                  <img height={32} width={32} src={item.logo} alt={item.title} />
-                  <div className='flex-grow'>
-                    <Typography className='font-medium' color='text.primary'>
-                      {item.title}
-                    </Typography>
-                    <Typography variant='body2'>{item.subtitle}</Typography>
-                  </div>
-                </div>
-                <Switch defaultChecked={item.checked} />
-              </div>
-            ))}
-          </CardContent>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <CardHeader title='Social Accounts' subheader='Display content from social accounts on your site' />
-          <CardContent className='flex flex-col gap-4'>
-            {socialAccountsArr.map((item, index) => (
-              <div key={index} className='flex items-center justify-between gap-4'>
-                <div className='flex flex-grow items-center gap-4'>
-                  <img height={32} width={32} src={item.logo} alt={item.title} />
-                  <div className='flex-grow'>
-                    <Typography className='font-medium' color='text.primary'>
-                      {item.title}
-                    </Typography>
-                    {item.isConnected ? (
-                      <Typography color='primary.main' component={Link} href={item.href || '/'} target='_blank'>
-                        {item.username}
-                      </Typography>
+    <Box>
+      <Typography variant="h5" fontWeight="bold" mb={2}>
+        Minhas integrações
+      </Typography>
+      <Grid container spacing={4} mb={6}>
+        {connectedIntegrations.length > 0 ? (
+          connectedIntegrations.map((integration) => (
+            <Grid item xs={12} sm={6} md={4} key={`connected-${integration.name}`}>
+              <Card variant="outlined" sx={{ height: 150, display: 'flex' }}>
+                <Box
+                  component="img"
+                  src={integration.icon}
+                  alt={integration.name}
+                  sx={{
+                    width: 150,
+                    height: '100%',
+                    objectFit: 'contain',
+                    flexShrink: 0,
+                    borderRadius: '4px 0 0 4px',
+                    backgroundColor: '#f5f5f5'
+                  }}
+                />
+                <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={1}
+                  >
+                    <Typography variant="h6">{integration.name}</Typography>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      title="Configurar integração"
+                      onClick={() => handleConfigureClick(integration)}
+                    >
+                      <i className="ri-settings-3-line" />
+                    </IconButton>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
+                    {integration.description}
+                  </Typography>
+                  <Box
+                    mt={2}
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    onMouseEnter={() => setHoveredIntegration(integration.name)}
+                    onMouseLeave={() => setHoveredIntegration(null)}
+                  >
+                    {integration.enabled ? (
+                      <>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => disconnectIntegration(integration.name)}
+                        >
+                          Desconectar
+                        </Button>
+                        <Switch
+                          checked={integration.enabled}
+                          onChange={() => toggleEnabled(integration.name)}
+                        />
+                      </>
                     ) : (
-                      <Typography variant='body2'>Not Connected</Typography>
+                      <>
+                        {hoveredIntegration === integration.name ? (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => disconnectIntegration(integration.name)}
+                          >
+                            Desconectar
+                          </Button>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Inativada
+                          </Typography>
+                        )}
+                        <Switch
+                          checked={integration.enabled}
+                          onChange={() => toggleEnabled(integration.name)}
+                        />
+                      </>
                     )}
-                  </div>
-                </div>
-                <CustomIconButton variant='outlined' color={item.isConnected ? 'error' : 'secondary'}>
-                  <i className={item.isConnected ? 'ri-delete-bin-line' : 'ri-link'} />
-                </CustomIconButton>
-              </div>
-            ))}
-          </CardContent>
-        </Grid>
+                  </Box>
+                </Box>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Grid item xs={12}>
+            <Typography variant="body2">Nenhuma integração conectada ainda.</Typography>
+          </Grid>
+        )}
       </Grid>
-    </Card>
+
+      <Typography variant="h6" mb={2}>
+        Integrações disponíveis
+      </Typography>
+      <Grid container spacing={4}>
+        {integrations.length > 0 ? (
+          integrations.map((integration) => (
+            <Grid item xs={12} sm={6} md={4} key={`available-${integration.name}`}>
+              <Card variant="outlined" sx={{ height: 150, display: 'flex' }}>
+                <Box
+                  component="img"
+                  src={integration.icon}
+                  alt={integration.name}
+                  sx={{
+                    width: 150,
+                    height: '100%',
+                    objectFit: 'contain',
+                    flexShrink: 0,
+                    borderRadius: '4px 0 0 4px',
+                    backgroundColor: '#f5f5f5'
+                  }}
+                />
+                <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                  <Typography variant="h6" mb={1}>
+                    {integration.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
+                    {integration.description}
+                  </Typography>
+                  <Box mt={2} display="flex" justifyContent="flex-end" alignItems="center">
+                    <Button variant="outlined" onClick={() => handleConnectClick(integration)}>
+                      Conectar
+                    </Button>
+                  </Box>
+                </Box>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Grid item xs={12}>
+            <Typography variant="body2">Nenhuma integração disponível para conectar.</Typography>
+          </Grid>
+        )}
+      </Grid>
+
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={handleClose}
+        PaperProps={{ sx: { width: 350, p: 3 } }}
+      >
+        {selectedIntegration && (
+          <>
+            <Typography variant="h5" mb={2}>
+              Configurar {selectedIntegration.name}
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box
+              component="img"
+              src={selectedIntegration.icon}
+              alt={selectedIntegration.name}
+              sx={{ width: 80, height: 80, objectFit: 'contain', mb: 2 }}
+            />
+            <Typography variant="body1" mb={4}>
+              {selectedIntegration.description}
+            </Typography>
+
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button variant="outlined" onClick={handleClose}>
+                Cancelar
+              </Button>
+              <Button variant="contained" onClick={handleSave}>
+                Salvar
+              </Button>
+            </Box>
+          </>
+        )}
+      </Drawer>
+    </Box>
   )
 }
 
-export default Connections
+export default Integrations

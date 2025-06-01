@@ -54,6 +54,18 @@ export async function getUsers() {
 
 }
 
+export async function getIntegrations() {
+
+  const session = await getServerSession(authOptions)
+
+  const db = new AppContext()
+
+  let integrations = await db.Integration.findAll()
+
+  return _.map(integrations, (item) => item.get({ plain: true }))
+
+}
+
 export async function onApprove({id}) {
 
   const db = new AppContext()

@@ -172,12 +172,13 @@ const Login = ({ mode }) => {
           onSubmit={handleLogin}
         >
           {({ isSubmitting, values, handleChange, errors, touched, submitForm, setFieldValue }) => {
+            
             // Focar o campo senha se email já estiver preenchido
-            useEffect(() => {
-              if (values.email && passwordRef.current) {
-                passwordRef.current.focus()
-              }
-            }, [values.email])
+            //useEffect(() => {
+            //  if (rememberMe) {
+            //    passwordRef.current.focus()
+            //  }
+            //}, [rememberMe])
 
             useEffect(() => {
               if (values.companyBusinessId) {

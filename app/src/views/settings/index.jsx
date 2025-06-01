@@ -20,22 +20,22 @@ import UserList from '../apps/user/list'
 import { Users } from './users'
 import BillingPlans from './signature'
 import Security from '@views/pages/account-settings/security'
+import Integrations from '@views/pages/account-settings/connections'
 
 //const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
 //const Signature = dynamic(() => import('@views/settings/signature'))
 const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
-const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
 
-export const ViewSettings = ({ company, initialUsers }) => {
+export const ViewSettings = ({ company, integrations }) => {
     
   // Vars
   const tabContentList = {
     'company': <Company company={company} />,
-    'users': <Users initialUsers={initialUsers} />,
+    'users': <Users />,
     'security': <Security />,
     'billing-plans': <></>, //<BillingPlans />,
     'notifications': <NotificationsTab />,
-    connections: <ConnectionsTab />
+    connections: <Integrations integrations={integrations} />
   }
 
   const [activeTab, setActiveTab] = useState('company')
