@@ -74,12 +74,13 @@ const CompanySwitcherDropdown = () => {
             {session.data?.company?.surname || branch.name}
           </Typography>
         </Box>
-
+        {/*
         <Tooltip title="Mudar empresa/filial">
           <IconButton size="small" onClick={handleOpen}>
             <i className="ri-arrow-down-s-line" style={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
+        */}
       </Box>
 
       <Menu

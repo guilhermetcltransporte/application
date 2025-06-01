@@ -7,6 +7,7 @@ import { CompanyUser } from './models/companyUser.model.js'
 import { CompanyBusiness } from './models/companyBusiness.model.js'
 import { User } from './models/user.model.js'
 import { UserMember } from './models/userMember.model.js'
+import { BankAccount } from './models/bankAccount.model.js'
 
 const afterFind = (result) => {
   const trimStrings = obj => {
@@ -26,6 +27,8 @@ const afterFind = (result) => {
 
 export class AppContext extends Sequelize {
   
+  BankAccout = this.define('bankAccount', new BankAccount(), { tableName: 'conta_bancaria' })
+
   Company = this.define('company', new Company(), { tableName: 'empresa_filial' })
 
   CompanyBusiness = this.define('companyBusiness', new CompanyBusiness(), { tableName: 'empresa' })
