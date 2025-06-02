@@ -10,6 +10,8 @@ import { UserMember } from './models/userMember.model.js'
 import { BankAccount } from './models/bankAccount.model.js'
 import { Integration } from './models/integration.model.js'
 import { CompanyIntegration } from './models/companyIntegration.model.js'
+import { Bank } from './models/bank.model.js'
+import { Statement } from './models/statement.model.js'
 
 const afterFind = (result) => {
   const trimStrings = obj => {
@@ -29,7 +31,9 @@ const afterFind = (result) => {
 
 export class AppContext extends Sequelize {
   
-  BankAccout = this.define('bankAccount', new BankAccount(), { tableName: 'conta_bancaria' })
+  Bank = this.define('bank', new Bank(), { tableName: 'Banco' })
+
+  BankAccount = this.define('bankAccount', new BankAccount(), { tableName: 'conta_bancaria' })
 
   Company = this.define('company', new Company(), { tableName: 'empresa_filial' })
 
@@ -40,6 +44,8 @@ export class AppContext extends Sequelize {
   CompanyUser = this.define('companyUser', new CompanyUser(), { tableName: 'companyUser' })
 
   Integration = this.define('integration', new Integration(), { tableName: 'integration' })
+
+  Statement = this.define('statement', new Statement(), { tableName: 'statement' })
 
   User = this.define('user', new User(), { tableName: 'aspnet_Users' })
 
@@ -66,7 +72,9 @@ export class AppContext extends Sequelize {
       },
     })
 
-    this.BankAccout.belongsTo(this.CompanyIntegration, { as: 'companyIntegration', foreignKey: 'companyIntegrationId' })
+    this.BankAccount.belongsTo(this.Bank, { as: 'bank', foreignKey: 'bankId' })
+
+    this.BankAccount.belongsTo(this.CompanyIntegration, { as: 'companyIntegration', foreignKey: 'companyIntegrationId' })
 
     this.Company.hasMany(this.CompanyUser, { as: 'companyUsers', foreignKey: 'companyId' })
 
@@ -77,11 +85,15 @@ export class AppContext extends Sequelize {
     this.CompanyUser.belongsTo(this.User, { as: 'user', foreignKey: 'userId' })
     this.CompanyUser.belongsTo(this.Company, { as: 'company', foreignKey: 'companyId' })
 
+
+    this.Statement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'bankAccountId' })
+
+
     this.User.hasMany(this.CompanyUser, { as: 'companyUsers', foreignKey: 'userId' })
     this.User.belongsTo(this.UserMember, { as: 'userMember', foreignKey: 'userId', targetKey: 'userId' })
 
 
-    this.BankAccout.addHook('afterFind', afterFind)
+    this.BankAccount.addHook('afterFind', afterFind)
     this.Company.addHook('afterFind', afterFind)
     this.CompanyBusiness.addHook('afterFind', afterFind)
     this.CompanyIntegration.addHook('afterFind', afterFind)

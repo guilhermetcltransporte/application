@@ -67,9 +67,10 @@ export async function getBankAccounts (search) {
 
     //where.push({'$userName$': {[Sequelize.Op.like]: `%${search.replace(' ', "%").toUpperCase()}%`}})
 
-    const bankAccounts = await db.BankAccout.findAll({
-        attributes: ['codigo_conta_bancaria', 'agency'],
+    const bankAccounts = await db.BankAccount.findAll({
+        attributes: ['codigo_conta_bancaria', 'agency', 'number'],
         include: [
+            {model: db.Bank, as: 'bank'},
             {model: db.CompanyIntegration, as: 'companyIntegration'}
         ],
         where: {

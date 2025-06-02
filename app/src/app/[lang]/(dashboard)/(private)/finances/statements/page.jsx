@@ -1,11 +1,13 @@
-import { getUserData } from '@/app/server/actions'
+"use server"
+
 import { ViewFinancesStatements } from '@/views/finances/statements'
+import { getStatements } from '@/views/finances/statements/index.controller'
 
 const FinancesStatements = async () => {
 
-  const data = await getUserData()
+  const initialStatements = await getStatements()
 
-  return <ViewFinancesStatements userData={data} />
+  return <ViewFinancesStatements initialStatements={initialStatements} />
 
 }
 

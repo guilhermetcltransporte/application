@@ -14,6 +14,16 @@ export class BankAccount {
     type: Sequelize.STRING
   }
 
+  number = {
+    field: 'numero_conta_bancaria',
+    type: Sequelize.STRING
+  }
+
+  companyId = {
+    field: 'CodigoEmpresaFilial',
+    type: Sequelize.TINYINT
+  }
+
   companyIntegrationId = {
     field: 'companyIntegrationId',
     type: Sequelize.UUIDV4

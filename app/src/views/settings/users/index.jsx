@@ -269,9 +269,17 @@ export const Users = () => {
       <Card>
         <Divider />
         <div className='flex justify-between gap-4 p-5 flex-col items-start sm:flex-row sm:items-center'>
-          <Button variant='contained' onClick={() => setCompanyUserId(null)} className='max-sm:is-full'>
+          <Button 
+            className='max-sm:is-full'
+            variant="contained"
+            sx={{ mb: 2 }}
+            startIcon={<i className="ri-add-circle-line" />} 
+            onClick={() => setCompanyUserId(null)}
+          >
             Adicionar
           </Button>
+
+          
         </div>
 
         <div className='overflow-x-auto'>
