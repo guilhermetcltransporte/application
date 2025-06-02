@@ -15,7 +15,7 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
-import { Alert } from '@mui/material'
+import { Alert, CircularProgress } from '@mui/material'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -35,7 +35,6 @@ import { checkUserExists, getCompanyByCNPJ, onRegister } from './Register.contro
 import { toast } from 'react-toastify'
 import { signIn } from 'next-auth/react'
 import Swal from 'sweetalert2'
-import LangRedirect from '@/components/LangRedirect'
 
 const Register = ({ mode }) => {
   const router = useRouter()
@@ -225,9 +224,20 @@ const Register = ({ mode }) => {
                         fullWidth
                         variant='filled'
                         label='CNPJ'
+                        inputProps={{ maxLength: 14 }}
                         error={touched.cnpj && Boolean(errors.cnpj)}
                         helperText={touched.cnpj && errors.cnpj}
-                        slotProps={{ inputLabel: { shrink: true } }}
+                        slotProps={{
+                          inputLabel: { shrink: true }
+                        }}
+                        autoFocus
+                        InputProps={{
+                          endAdornment: loadingCompany && (
+                            <InputAdornment position='end'>
+                              <CircularProgress size={20} />
+                            </InputAdornment>
+                          )
+                        }}
                       />
                     )}
                   </Field>
@@ -350,9 +360,8 @@ const Register = ({ mode }) => {
                     </>
                   )}
 
-                  {/* BLOCO SEMPRE VISÍVEL */}
                   <div className='flex justify-center items-center flex-wrap gap-2'>
-                    <Typography>Já tem uma conta ?</Typography>
+                    <Typography>Já tem uma conta?</Typography>
                     <Typography component={Link} href='/login' color='primary.main'>
                       Em vez disso, faça login
                     </Typography>

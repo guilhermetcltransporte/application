@@ -37,7 +37,7 @@ async function validateUserByEmail({ email, password, companyBusinessId, company
   if (_.isEmpty(user)) throw new AuthError(201, 'Usuário não encontrado!')
 
   if (validatePassword) {
-    if (!process.env.VALIDATE_USER) throw new AuthError(500, 'VALIDATE_USER não configurado.')
+    if (!process.env.VALIDATE_USER) throw new AuthError(201, 'VALIDATE_USER não configurado.')
 
     const response = await fetch(process.env.VALIDATE_USER, {
       method: 'POST',
@@ -46,7 +46,7 @@ async function validateUserByEmail({ email, password, companyBusinessId, company
     })
 
     const result = await response.json()
-    if (!result.d) throw new AuthError(202, 'Senha incorreta!')
+    if (!result.d) throw new AuthError(201, 'Senha incorreta!')
   }
 
   const { company, isActive } = await validateCompanyAccess(user.userId, companyBusinessId, companyId, db)
@@ -89,19 +89,19 @@ async function validateCompanyAccess(userId, companyBusinessId, companyId, db) {
     order: [['companies', 'codigo_empresa_filial', 'ASC']],
   })
 
-  if (_.isEmpty(companyBusinesses)) throw new AuthError(211, 'Nenhuma empresa encontrada!')
+  if (_.isEmpty(companyBusinesses)) throw new AuthError(201, 'Nenhuma empresa encontrada!')
   if (companyBusinesses.length > 1) {
-    throw new AuthError(212, 'Mais de uma empresa encontrada!', {
+    throw new AuthError(202, 'Mais de uma empresa encontrada!', {
       companyBusinessId,
       companyBusinesses,
     })
   }
 
   const selectedCompany = companyBusinesses[0]?.companies?.[0]
-  if (!selectedCompany) throw new AuthError(211, 'Nenhuma filial encontrada!')
+  if (!selectedCompany) throw new AuthError(201, 'Nenhuma filial encontrada!')
 
   if (companyBusinesses[0].companies.length > 1) {
-    throw new AuthError(213, 'Mais de uma filial encontrada!', {
+    throw new AuthError(202, 'Mais de uma filial encontrada!', {
       companyBusinessId: companyBusinesses[0].codigo_empresa,
       companyBusinesses,
       companies: companyBusinesses[0].companies,
@@ -109,8 +109,8 @@ async function validateCompanyAccess(userId, companyBusinessId, companyId, db) {
   }
 
   const companyUser = selectedCompany?.companyUsers?.[0]
-  if (companyUser?.isActive == null) throw new AuthError(214, 'Usuário pendente de aprovação!')
-  if (!companyUser.isActive) throw new AuthError(215, 'Usuário desativado!')
+  if (companyUser?.isActive == null) throw new AuthError(201, 'Usuário pendente de aprovação!')
+  if (!companyUser.isActive) throw new AuthError(201, 'Usuário desativado!')
 
   const company = _.cloneDeep(selectedCompany.dataValues)
   company.companyBusiness = companyBusinesses[0].dataValues
@@ -131,7 +131,7 @@ export const authOptions = {
         } catch (error) {
           const err = error instanceof AuthError
             ? error
-            : new AuthError(500, error.message || 'Erro interno')
+            : new AuthError(201, error.message || 'Erro interno')
 
           throw new Error(JSON.stringify({ status: err.status, message: err.message, ...err.extra }))
         }

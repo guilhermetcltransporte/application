@@ -40,6 +40,7 @@ const validationSchema = Yup.object().shape({
 })
 
 const Login = ({ mode }) => {
+
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
   const [companyBusinesses, setCompanyBusinesses] = useState([])
@@ -103,16 +104,9 @@ const Login = ({ mode }) => {
 
         switch (error.status) {
           case 201:
-          case 202:
-          case 211:
-          case 214:
-          case 215:
-          case 500:
             setErrorState(error.message)
             break
-          case 212:
-          case 213:
-            console.log(error.companyBusinesses)
+          case 202:
             setCompanyBusinesses(error.companyBusinesses || [])
             setCompanies(error.companies || [])
             setFieldValue('companyBusinessId', error.companyBusinessId)
@@ -279,9 +273,25 @@ const Login = ({ mode }) => {
                   </>
                 ) : (
                   <>
-                    <div>
-                      <Typography variant='h4'>Próximo passo! 👇🏻</Typography>
-                      <Typography>Informe a empresa</Typography>
+                    <IconButton
+                      onClick={() => {
+                        setCompanyBusinesses([])
+                        setCompanies([])
+                        setErrorState(null)
+                        setFieldValue('companyBusinessId', '')
+                        setFieldValue('companyId', '')
+                      }}
+                      disabled={isSubmitting}
+                      sx={{ alignSelf: 'flex-start', padding: 0 }}
+                    >
+                      <i className='ri-arrow-left-line' />
+                    </IconButton>
+                    
+                    <div className='flex items-center gap-2'>
+                      <div>
+                        <Typography variant='h4'>Próximo passo! 👇🏻</Typography>
+                        <Typography>Informe a empresa</Typography>
+                      </div>
                     </div>
 
                     {errorState && <Alert severity='warning'>{errorState}</Alert>}
