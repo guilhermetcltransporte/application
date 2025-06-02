@@ -42,13 +42,12 @@ const validationSchema = Yup.object().shape({
 const Login = ({ mode }) => {
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
-  const [companyBusiness, setCompanyBusiness] = useState([])
+  const [companyBusinesses, setCompanyBusinesses] = useState([])
   const [companies, setCompanies] = useState([])
   const [rememberMe, setRememberMe] = useState(true)
   const [initialEmail, setInitialEmail] = useState('')
 
-  const passwordRef = useRef(null) // ref para o input senha
-
+  const passwordRef = useRef(null)
   const { settings } = useSettings()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -71,7 +70,6 @@ const Login = ({ mode }) => {
   )
 
   useEffect(() => {
-    // Carregar email do localStorage, se existir
     const savedEmail = localStorage.getItem('rememberedEmail')
     if (savedEmail) {
       setInitialEmail(savedEmail)
@@ -85,59 +83,64 @@ const Login = ({ mode }) => {
     try {
       setErrorState(null)
 
-      const res = await signIn('credentials', { ...values, redirect: false })
+      const res = await signIn('credentials', {
+        email: values.email.trim(),
+        password: values.password,
+        companyBusinessId: values.companyBusinessId,
+        companyId: values.companyId,
+        redirect: false
+      })
 
       if (res?.error) {
-        const error = JSON.parse(res.error)
-
-        if (error.status === 201) {
-          setErrorState(error.message)
-          return
-        }
-        if (error.status === 202) {
-          setErrorState(error.message)
-          return
-        }
-        if (error.status === 211) {
-          setErrorState(error.message)
-          return
-        }
-        if (error.status === 212) {
-          setCompanyBusiness(error.companyBusiness || [])
-          return
-        }
-        if (error.status === 213) {
-          setCompanyBusiness(error.companyBusiness || [])
-          setCompanies(error.companies || [])
-          setFieldValue('companyBusinessId', error.companyBusinessId)
-          return
-        }
-        if (error.status === 214) {
-          setErrorState(error.message)
-          return
-        }
-        if (error.status === 215) {
-          setErrorState(error.message)
-          return
+        let error
+        try {
+          error = JSON.parse(res.error)
+        } catch {
+          error = { status: 500, message: res.error }
         }
 
-        setErrorState(error)
+        console.log(error)
+
+        switch (error.status) {
+          case 201:
+          case 202:
+          case 211:
+          case 214:
+          case 215:
+          case 500:
+            setErrorState(error.message)
+            break
+          case 212:
+          case 213:
+            console.log(error.companyBusinesses)
+            setCompanyBusinesses(error.companyBusinesses || [])
+            setCompanies(error.companies || [])
+            setFieldValue('companyBusinessId', error.companyBusinessId)
+            break
+          default:
+            setErrorState(error.message || 'Erro desconhecido')
+        }
+
+        setSubmitting(false)
+        return
       }
 
-      if (res?.ok && !res.error) {
-        // Se o checkbox lembrar estiver marcado, salva no localStorage, senão remove
+      if (res.ok && !res.error) {
         if (values.rememberMe) {
-          localStorage.setItem('rememberedEmail', values.email)
+          localStorage.setItem('rememberedEmail', values.email.trim())
         } else {
           localStorage.removeItem('rememberedEmail')
         }
+
         const redirectURL = searchParams.get('redirectTo') ?? '/'
         router.replace(getLocalizedUrl(redirectURL, locale))
       }
 
       setSubmitting(false)
     } catch (error) {
-      console.log(error)
+      console.error('Erro ao logar:', error)
+      setErrorState('Erro inesperado ao tentar fazer login.')
+      setSubmitting(false)
     }
   }
 
@@ -172,31 +175,19 @@ const Login = ({ mode }) => {
           onSubmit={handleLogin}
         >
           {({ isSubmitting, values, handleChange, errors, touched, submitForm, setFieldValue }) => {
-            
-            // Focar o campo senha se email já estiver preenchido
-            //useEffect(() => {
-            //  if (rememberMe) {
-            //    passwordRef.current.focus()
-            //  }
-            //}, [rememberMe])
-
             useEffect(() => {
-              if (values.companyBusinessId) {
-                submitForm()
-              }
-              if (values.companyId) {
+              if (values.companyBusinessId || values.companyId) {
                 submitForm()
               }
             }, [values.companyBusinessId, values.companyId])
 
             return (
               <Form className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
-
-                {_.size(companyBusiness) === 0 && _.size(companies) === 0 ? (
+                {_.size(companyBusinesses) === 0 && _.size(companies) === 0 ? (
                   <>
                     <div>
                       <Typography variant='h4'>{`Bem-vindo ao ${themeConfig.templateName}! 👋🏻`}</Typography>
-                      <br></br>
+                      <br />
                       <Typography>Por favor, faça login na sua conta</Typography>
                     </div>
 
@@ -209,7 +200,7 @@ const Login = ({ mode }) => {
                       variant='filled'
                       InputLabelProps={{ shrink: true }}
                       fullWidth
-                      autoFocus={!initialEmail} // Foco aqui só se não tiver email carregado
+                      autoFocus={!initialEmail}
                       onChange={e => {
                         handleChange(e)
                         setErrorState(null)
@@ -243,7 +234,7 @@ const Login = ({ mode }) => {
                       helperText={<ErrorMessage name='password' />}
                       error={!!errorState || (touched.password && Boolean(errors.password))}
                       disabled={isSubmitting}
-                      inputRef={passwordRef} // Passa a ref aqui
+                      inputRef={passwordRef}
                     />
 
                     <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
@@ -303,9 +294,9 @@ const Login = ({ mode }) => {
                             labelId='companyBusiness-label'
                             {...field}
                             error={meta.touched && Boolean(meta.error)}
-                            disabled={_.size(companyBusiness) == 1 || isSubmitting}
+                            disabled={_.size(companyBusinesses) === 1 || isSubmitting}
                           >
-                            {companyBusiness.map((c, index) => (
+                            {companyBusinesses.map((c, index) => (
                               <MenuItem key={index} value={c.codigo_empresa}>
                                 {c.description}
                               </MenuItem>
