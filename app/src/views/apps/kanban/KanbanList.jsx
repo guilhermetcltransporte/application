@@ -147,25 +147,24 @@ const KanbanList = props => {
             styles.kanbanColumn
           )}
         >
-          <Typography variant='h5' noWrap className='max-is-[80%]'>
-            {column.title}
-          </Typography>
+          <div className='flex flex-col overflow-hidden'>
+            <Typography variant='h5' noWrap className='truncate'>
+              {column.title}
+            </Typography>
+            {column.title && (
+              <Typography variant='caption' color='textSecondary' className='truncate'>
+                {column.agency} / {column.number}
+              </Typography>
+            )}
+          </div>
           <div className='flex items-center'>
             <i className={classnames('ri-drag-move-fill text-textSecondary list-handle', styles.drag)} />
             <OptionMenu
               iconClassName='text-xl text-textPrimary'
               options={[
                 {
-                  text: 'Edit',
-                  icon: 'ri-pencil-line text-base',
-                  menuItemProps: {
-                    className: 'flex items-center gap-2',
-                    onClick: () => setEditDisplay(!editDisplay)
-                  }
-                },
-                {
-                  text: 'Delete',
-                  icon: 'ri-delete-bin-line text-base',
+                  text: 'Gerar remessa',
+                  icon: 'ri-upload-2-line text-base',
                   menuItemProps: { className: 'flex items-center gap-2', onClick: handleDeleteColumn }
                 }
               ]}

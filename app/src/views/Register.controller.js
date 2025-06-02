@@ -17,10 +17,10 @@ export async function checkUserExists(userName) {
 }
 
 export async function getCompanyByCNPJ(cnpj) {
-    
+
     const db = new AppContext()
 
-    const company = await db.Company.findOne({where: [{cnpj}]})
+    const company = await db.Company.findOne({where: [{cnpj: cnpj.replace(/\D/g, '')}]})
 
     if (company) {
         return { exists: true, name: company.name }
@@ -28,6 +28,23 @@ export async function getCompanyByCNPJ(cnpj) {
 
     return { exists: false }
     
+}
+
+export async function getReceitaFederal(cnpj) {
+    try {
+
+      const cleanedCNPJ = cnpj.replace(/\D/g, '')
+      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cleanedCNPJ}`)
+
+      console.log(response)
+
+      if (!response.ok) throw new Error('Erro ao buscar na Receita Federal')
+
+      return await response.json()
+
+    } catch (error) {
+      throw error
+    }
 }
 
 export async function onRegister(formData) {

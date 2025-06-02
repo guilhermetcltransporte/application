@@ -14,29 +14,37 @@ import KanbanList from './KanbanList'
 import NewColumn from './NewColumn'
 import KanbanDrawer from './KanbanDrawer'
 
-const KanbanBoard = () => {
+const KanbanBoard = ({initialBankAccounts, initialFinancialMovementIntallments}) => {
+
+  const [bankAccounts, setBankAccounts] = useState(initialBankAccounts || [])
+  const [financialMovementIntallments, setFinancialMovementIntallments] = useState(initialFinancialMovementIntallments || [])
+
   // State
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Hooks
   const kanbanStore = useSelector(state => state.kanbanReducer)
+
   const dispatch = useDispatch()
 
-  const [boardRef, columns, setColumns] = useDragAndDrop(kanbanStore.columns, {
+  const [boardRef, columns, setColumns] = useDragAndDrop(bankAccounts, {
     plugins: [animations()],
     dragHandle: '.list-handle'
   })
 
   // Add New Column
   const addNewColumn = title => {
-    const maxId = Math.max(...kanbanStore.columns.map(column => column.id))
+
+    const maxId = Math.max(...bankAccounts.map(column => column.id))
 
     dispatch(addColumn(title))
-    setColumns([...columns, { id: maxId + 1, title, taskIds: [] }])
+
+    setColumns([...bankAccounts, { id: maxId + 1, title, taskIds: [] }])
+
   }
 
   // To get the current task for the drawer
-  const currentTask = kanbanStore.tasks.find(task => task.id === kanbanStore.currentTaskId)
+  const currentTask = financialMovementIntallments.find(item => item.id === kanbanStore.id)
 
   // Update Columns on Drag and Drop
   useEffect(() => {
@@ -57,7 +65,7 @@ const KanbanBoard = () => {
             columns={columns}
             setColumns={setColumns}
             currentTask={currentTask}
-            tasks={column.taskIds.map(taskId => kanbanStore.tasks.find(task => task.id === taskId))}
+            tasks={column.taskIds.map(id => financialMovementIntallments.find(item => item.id === id))}
           />
         ))}
       </div>

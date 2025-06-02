@@ -12,6 +12,9 @@ import { Integration } from './models/integration.model.js'
 import { CompanyIntegration } from './models/companyIntegration.model.js'
 import { Bank } from './models/bank.model.js'
 import { Statement } from './models/statement.model.js'
+import { FinancialMovement } from './models/financialMovement.model.js'
+import { FinancialMovementIntallment } from './models/financialMovementInstallment.model.js'
+import { Partner } from './models/partner.model.js'
 
 const afterFind = (result) => {
   const trimStrings = obj => {
@@ -43,7 +46,13 @@ export class AppContext extends Sequelize {
 
   CompanyUser = this.define('companyUser', new CompanyUser(), { tableName: 'companyUser' })
 
+  FinancialMovement = this.define('financialMovement', new FinancialMovement(), { tableName: 'movimentos' })
+
+  FinancialMovementInstallment = this.define('financialMovementIntallment', new FinancialMovementIntallment(), { tableName: 'movimentos_detalhe' })
+
   Integration = this.define('integration', new Integration(), { tableName: 'integration' })
+
+  Partner = this.define('partner', new Partner(), { tableName: 'pessoa' })
 
   Statement = this.define('statement', new Statement(), { tableName: 'statement' })
 
@@ -84,6 +93,11 @@ export class AppContext extends Sequelize {
 
     this.CompanyUser.belongsTo(this.User, { as: 'user', foreignKey: 'userId' })
     this.CompanyUser.belongsTo(this.Company, { as: 'company', foreignKey: 'companyId' })
+
+    this.FinancialMovementInstallment.belongsTo(this.FinancialMovement, { as: 'financialMovement', foreignKey: 'codigo_movimento' })
+    
+    this.FinancialMovement.belongsTo(this.Partner, { as: 'partner', foreignKey: 'codigo_pessoa' })
+    this.FinancialMovement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'codigo_conta' })
 
 
     this.Statement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'bankAccountId' })

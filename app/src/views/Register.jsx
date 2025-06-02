@@ -31,7 +31,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
-import { checkUserExists, getCompanyByCNPJ, onRegister } from './Register.controller'
+import { checkUserExists, getCompanyByCNPJ, getReceitaFederal, onRegister } from './Register.controller'
 import { toast } from 'react-toastify'
 import { signIn } from 'next-auth/react'
 import Swal from 'sweetalert2'
@@ -86,6 +86,32 @@ const Register = ({ mode }) => {
       .required('Confirme a senha'),
     acceptTerms: Yup.boolean().oneOf([true], 'É necessário aceitar os termos')
   })
+
+  const formatCNPJ = (value) => {
+    const cnpj = value.replace(/\D/g, '')
+    return cnpj
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+      .slice(0, 18)
+  }
+
+  // Função para buscar dados na Receita Federal (API pública)
+  const getCompanyByCNPJFromReceitaFederal = async (cnpj) => {
+    try {
+
+      const data = await getReceitaFederal(cnpj)
+
+      if (data.status === 'OK') {
+        return { exists: true, name: data.nome }
+      } else {
+        return { exists: false }
+      }
+    } catch (error) {
+      throw error
+    }
+  }
 
   const handleRegister = async (values, { setFieldError }) => {
     try {
@@ -186,6 +212,7 @@ const Register = ({ mode }) => {
                 }
 
                 const fetchCompany = async () => {
+
                   setLoadingCompany(true)
 
                   try {
@@ -197,9 +224,19 @@ const Register = ({ mode }) => {
                       setEmpresaEncontrada(true)
                       userNameRef.current?.focus()
                     } else {
-                      setFieldValue('description', '')
-                      setDescriptionDisabled(false)
-                      setEmpresaEncontrada(false)
+                      // Busca na Receita Federal se não encontrar internamente
+                      try {
+                        const receitaResult = await getCompanyByCNPJFromReceitaFederal(values.cnpj)
+                        if (receitaResult.exists) {
+                          setFieldValue('description', receitaResult.name)
+                          setDescriptionDisabled(true)
+                        }
+                      } catch (receitaError) {
+                        setFieldValue('description', '')
+                        setDescriptionDisabled(false)
+                        setEmpresaEncontrada(false)
+                        //toast.error('Erro ao buscar dados na Receita Federal.', { theme: 'colored' })
+                      }
                     }
 
                     setShowRestForm(true)
@@ -224,13 +261,11 @@ const Register = ({ mode }) => {
                         fullWidth
                         variant='filled'
                         label='CNPJ'
-                        inputProps={{ maxLength: 14 }}
                         error={touched.cnpj && Boolean(errors.cnpj)}
                         helperText={touched.cnpj && errors.cnpj}
-                        slotProps={{
-                          inputLabel: { shrink: true }
-                        }}
-                        autoFocus
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        value={values.cnpj}
+                        onChange={e => setFieldValue('cnpj', formatCNPJ(e.target.value))}
                         InputProps={{
                           endAdornment: loadingCompany && (
                             <InputAdornment position='end'>
@@ -319,7 +354,7 @@ const Register = ({ mode }) => {
                             fullWidth
                             variant='filled'
                             label='Confirmar senha'
-                            type={isPasswordShown ? 'text' : 'password'}
+                            type='password'
                             error={touched.confirmPassword && Boolean(errors.confirmPassword)}
                             helperText={touched.confirmPassword && errors.confirmPassword}
                             slotProps={{ inputLabel: { shrink: true } }}
@@ -328,48 +363,31 @@ const Register = ({ mode }) => {
                       </Field>
 
                       <FormControlLabel
-                        control={
-                          <Field name='acceptTerms' type='checkbox'>
-                            {({ field }) => (
-                              <Checkbox
-                                {...field}
-                                checked={values.acceptTerms}
-                                onChange={e => setFieldValue('acceptTerms', e.target.checked)}
-                              />
-                            )}
-                          </Field>
-                        }
-                        label={
-                          <>
-                            <span>Concordo com a </span>
-                            <Link className='text-primary' href='/' onClick={e => e.preventDefault()}>
-                              política de privacidade e os termos
-                            </Link>
-                          </>
-                        }
+                        control={<Checkbox checked={values.acceptTerms} onChange={e => setFieldValue('acceptTerms', e.target.checked)} />}
+                        label='Aceito os termos e condições'
                       />
-                      {touched.acceptTerms && errors.acceptTerms && (
-                        <Typography variant='caption' sx={{ color: 'red' }}>
-                          {errors.acceptTerms}
-                        </Typography>
-                      )}
-
-                      <Button fullWidth variant='contained' type='submit' disabled={isSubmitting}>
+                          
+                      <Button type='submit' variant='contained' disabled={isSubmitting}>
                         {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
                       </Button>
+                      
                     </>
                   )}
 
-                  <div className='flex justify-center items-center flex-wrap gap-2'>
-                    <Typography>Já tem uma conta?</Typography>
-                    <Typography component={Link} href='/login' color='primary.main'>
-                      Em vez disso, faça login
-                    </Typography>
-                  </div>
                 </Form>
               )
             }}
           </Formik>
+
+          <Typography variant='body2' className='mt-4'>
+            Já tem uma conta?{' '}
+            <Link
+              href={getLocalizedUrl('/login', locale)}
+              className='text-primary hover:underline'
+            >
+              Fazer login
+            </Link>
+          </Typography>
         </div>
       </div>
     </div>
