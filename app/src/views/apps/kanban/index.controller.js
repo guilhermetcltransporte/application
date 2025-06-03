@@ -24,9 +24,9 @@ export async function getBankAccounts() {
             codigo_pagamento: {
                 [Op.is]: null
             },
-            //data_vencimento: {
-            //    [Op.gte]: '2025-06-01T00:00:00'
-            //}
+            data_vencimento: {
+                [Op.gte]: '2025-06-01T00:00:00'
+            }
         }],
         order: [['data_vencimento', 'ASC']]
     })
@@ -39,8 +39,10 @@ export async function getBankAccounts() {
     const wBankAccounts = _.map(bankAccounts, item => ({
         ...item.get({ plain: true }),
         id: item.codigo_conta_bancaria,
-        title: item.bank.description,
-        taskIds: _.filter(wFinancialMovementInstallments, (item) => item.financialMovement.bankAccountId === item.codigo_conta_bancaria).map(item => item.id).slice(0, 10)
+        title: item.bank?.description,
+        taskIds: _.filter(wFinancialMovementInstallments, (installment) => {
+            return installment.bankAccountId === item.codigo_conta_bancaria
+        }).map(item => item.id).slice(0, 10)
     }))
 
     // Adiciona o item com id null no início
@@ -50,7 +52,7 @@ export async function getBankAccounts() {
                 id: null,
                 title: '[Nenhum]',
                 //taskIds: wFinancialMovementInstallments.map(item => item.id)
-                taskIds: _.filter(wFinancialMovementInstallments, (item) => item.financialMovement.bankAccountId === null).map(item => item.id).slice(0, 10)
+                taskIds: _.filter(wFinancialMovementInstallments, (installment) => !installment.bankAccountId).map(item => item.id).slice(0, 10)
             },
             ...wBankAccounts
         ],

@@ -140,12 +140,23 @@ const TaskCard = props => {
 
           {/* Informações destacadas */}
           <div className='flex flex-col gap-2 is-full'>
-            {/* Fornecedor */}
+
+            {/* Número documento */}
+            <div className='flex items-center gap-2'>
+              <i className='ri-file-list-2-line text-base text-primary' />
+              <Typography variant='body2' color='text.secondary' className='break-words is-full line-clamp-1'>
+                <strong>{task.id} #{task.financialMovement?.documentNumber} - {task.installment}</strong>
+              </Typography>
+            </div>
+
+            {/* Recebedor ou Pagador */}
             <div className='flex items-center gap-2'>
               <i className='ri-user-line text-base text-primary' />
-              <Typography variant='body2' color='text.secondary'>
-                <strong>{task.id} {task.financialMovement?.partner?.surname}</strong>
-              </Typography>
+              <Tooltip title={task.financialMovement?.partner?.surname || ''}>
+                <Typography variant='body2' color='text.secondary' className='break-words is-full line-clamp-1'>
+                  <strong>{task.financialMovement?.partner?.surname}</strong>
+                </Typography>
+              </Tooltip>
             </div>
 
             {/* Descrição com tooltip */}
@@ -158,26 +169,28 @@ const TaskCard = props => {
               </Tooltip>
             </div>
 
-            {/* Valor */}
-            <div className='flex items-center gap-2'>
-              <i className='ri-money-dollar-circle-line text-base text-primary' />
-              <Typography variant='body2' color='text.secondary'>
-                <strong>Valor:</strong>{' '}
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(task.amount || 0)}
-              </Typography>
+            {/* Valor e Vencimento na mesma linha com ícones e valores visíveis */}
+            <div className='flex justify-between items-center is-full'>
+              {/* Valor */}
+              <div className='flex items-center gap-1'>
+                <i className='ri-money-dollar-circle-line text-base text-primary' />
+                <Typography variant='body2' color='text.secondary'>
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                  }).format(task.amount || 0)}
+                </Typography>
+              </div>
+
+              {/* Vencimento */}
+              <div className='flex items-center gap-1'>
+                <i className='ri-calendar-line text-base text-primary' />
+                <Typography variant='body2' color='text.secondary'>
+                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString('pt-BR') : '-'}
+                </Typography>
+              </div>
             </div>
 
-            {/* Data de Vencimento */}
-            <div className='flex items-center gap-2'>
-              <i className='ri-calendar-line text-base text-primary' />
-              <Typography variant='body2' color='text.secondary'>
-                <strong>Vencimento:</strong>{' '}
-                {task.dueDate ? new Date(task.dueDate).toLocaleDateString('pt-BR') : '-'}
-              </Typography>
-            </div>
           </div>
 
           {/* Attachments / Comments / Avatares */}

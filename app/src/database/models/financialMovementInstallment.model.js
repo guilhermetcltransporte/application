@@ -13,6 +13,16 @@ export class FinancialMovementIntallment {
     type: Sequelize.BIGINT
   }
 
+  bankAccountId = {
+      field: 'bankAccountId',
+      type: Sequelize.SMALLINT
+  }
+
+  installment = {
+    field: 'numero_parcela',
+    type: Sequelize.STRING
+  }
+
   description = {
     field: 'Descricao',
     type: Sequelize.STRING

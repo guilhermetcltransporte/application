@@ -25,7 +25,7 @@
     "@emotion/styled": "11.14.0",
     "@floating-ui/react": "0.27.2",
     "@formatjs/intl-localematcher": "0.5.9",
-    "@formkit/drag-and-drop": "0.2.6",
+    "@formkit/drag-and-drop": "^0.5.3",
     "@fullcalendar/common": "5.11.5",
     "@fullcalendar/core": "6.1.15",
     "@fullcalendar/daygrid": "6.1.15",

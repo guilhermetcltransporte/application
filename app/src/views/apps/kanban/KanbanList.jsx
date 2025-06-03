@@ -34,7 +34,7 @@ const KanbanList = props => {
   const [tasksListRef, tasksList, setTasksList] = useDragAndDrop(tasks, {
     group: 'tasksList',
     plugins: [animations()],
-    draggable: el => el.classList.contains('item-draggable')
+    draggable: el => el.classList.contains('item-draggable'),
   })
 
   // Add New Task
@@ -153,7 +153,7 @@ const KanbanList = props => {
             </Typography>
             {column.title && (
               <Typography variant='caption' color='textSecondary' className='truncate'>
-                {column.agency} / {column.number}
+                {column.id} - {column.agency} / {column.number}
               </Typography>
             )}
           </div>

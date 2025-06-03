@@ -8,9 +8,9 @@ export class FinancialMovement {
         type: Sequelize.INTEGER
     }
 
-    bankAccountId = {
-        field: 'codigo_conta',
-        type: Sequelize.BIGINT
+    documentNumber = {
+        field: 'numero_documento',
+        type: Sequelize.STRING
     }
   
 }

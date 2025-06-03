@@ -9,7 +9,7 @@ export class Partner {
   }
 
   surname = {
-    field: 'RazaoSocial',
+    field: 'nome',
     primaryKey: true,
     type: Sequelize.STRING
   }
