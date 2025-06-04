@@ -8,7 +8,7 @@ export class Bank {
     type: Sequelize.INTEGER
   }
 
-  description = {
+  name = {
     field: 'Descricao',
     type: Sequelize.STRING
   }

@@ -1,60 +1,88 @@
 "use client"
 
-import { Typography, IconButton, Menu, MenuItem, Button, TextField } from "@mui/material"
+import {
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Button,
+  TextField,
+  Tooltip,
+} from "@mui/material"
 import React, { useState, useEffect, useRef } from "react"
+import { updateInstallment } from "./index.controller"
 
-
-const TaskCard = ({ task }) => {
-  const isLate = task.status === "atrasada"
+// InstallmentCard com loading visual
+const InstallmentCard = ({ installment, loading }) => {
+  const isLate = installment.status === "overdue"
   const backgroundColor = isLate ? "#fdecea" : "white"
+  const opacity = loading ? 0.5 : 1
 
   return (
     <div
+      className="flex flex-col gap-y-1 items-start relative overflow-hidden"
       style={{
         padding: "8px",
         backgroundColor,
         borderRadius: 4,
+        opacity,
+        position: "relative",
       }}
     >
-      <Typography variant="subtitle2" gutterBottom style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <i className="ri-file-text-line" style={{ fontSize: "1rem" }}></i>
-        {task.title}
-      </Typography>
-      <Typography
-        variant="body2"
-        style={{ color: "#666", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}
-      >
-        <i className="ri-align-left" style={{ fontSize: "0.875rem" }}></i>
-        {task.description}
-      </Typography>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          color: "#444",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <i
-            className="ri-money-dollar-circle-line"
-            style={{ fontSize: "0.875rem", lineHeight: 1 }}
-          ></i>
-          <Typography variant='body2' color='text.secondary'>R$ {task.amount?.toFixed(2)}</Typography>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
+          <i className="ri-loader-4-line animate-spin text-xl text-gray-500"></i>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <i
-            className="ri-calendar-line"
-            style={{ fontSize: "0.875rem", lineHeight: 1 }}
-          ></i>
-          <Typography variant='body2' color='text.secondary'>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('pt-BR') : '-'}</Typography>
+      )}
+
+      <div className="flex items-center gap-2">
+        <i className="ri-file-list-2-line text-base" />
+        <Typography variant="body2" color="text.secondary" className="break-words is-full line-clamp-1">
+          <strong>#{installment.financialMovement?.documentNumber} - {installment.installment}</strong>
+        </Typography>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <i className="ri-user-line text-base" />
+        <Tooltip title={installment.financialMovement?.partner?.surname || ''}>
+          <Typography variant="body2" color="text.secondary" className="break-words is-full line-clamp-1">
+            <strong>{installment.financialMovement?.partner?.surname}</strong>
+          </Typography>
+        </Tooltip>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <i className="ri-file-text-line text-base" />
+        <Tooltip title={installment.description || ''}>
+          <Typography variant="body2" color="text.secondary" className="break-words is-full line-clamp-1">
+            {installment.description}
+          </Typography>
+        </Tooltip>
+      </div>
+
+      <div className="flex justify-between items-center is-full">
+        <div className="flex items-center gap-1">
+          <i className="ri-money-dollar-circle-line text-base" />
+          <Typography variant="body2" color="text.secondary">
+            {new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            }).format(installment.amount || 0)}
+          </Typography>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <i className="ri-calendar-line text-base" />
+          <Typography variant="body2" color="text.secondary">
+            {installment.dueDate ? new Date(installment.dueDate).toLocaleDateString('pt-BR') : '-'}
+          </Typography>
         </div>
       </div>
     </div>
   )
 }
 
-const NewTask = ({ addTask }) => {
+const NewInstallment = ({ addInstallment }) => {
   const [editing, setEditing] = useState(false)
   const [input, setInput] = useState("")
   const inputRef = useRef(null)
@@ -68,7 +96,7 @@ const NewTask = ({ addTask }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (input.trim()) {
-      addTask(input.trim())
+      addInstallment(input.trim())
       setInput("")
       setEditing(false)
     }
@@ -117,77 +145,44 @@ const NewTask = ({ addTask }) => {
   )
 }
 
-
-const ColumnHeader = ({ column, onGenerateRemessa, onExportCsv }) => {
+const ColumnHeader = ({ bankAccount, onGenerateRemessa, onExportCsv }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
 
-  const handleOpenMenu = (event) => {
-    setAnchorEl(event.currentTarget)
-  }
-  const handleCloseMenu = () => {
-    setAnchorEl(null)
-  }
+  const handleOpenMenu = (event) => setAnchorEl(event.currentTarget)
+  const handleCloseMenu = () => setAnchorEl(null)
 
   const handleGenerateRemessaClick = () => {
-    onGenerateRemessa(column.id)
+    onGenerateRemessa(bankAccount.id)
     handleCloseMenu()
   }
 
   const handleExportCsvClick = () => {
-    onExportCsv(column.id)
+    onExportCsv(bankAccount.id)
     handleCloseMenu()
   }
 
   return (
-    <div 
-      className="column-header flex items-center justify-between p-2"
-      style={{ gap: 8 }}
-    >
+    <div className="column-header flex items-center justify-between p-2" style={{ gap: 8 }}>
       <div className="flex items-center gap-2">
-        {column.bankIcon && (
-          <img
-            src={column.bankIcon}
-            alt={`${column.title} icon`}
-            style={{ width: 24, height: 24 }}
-          />
+        {bankAccount.bank?.icon && (
+          <img src={bankAccount.bank?.icon} alt={`${bankAccount.bank?.name} icon`} style={{ width: 24, height: 24 }} />
         )}
         <div>
-          <Typography fontWeight="bold">{column.title}</Typography>
+          <Typography fontWeight="bold">{bankAccount.bank?.name}</Typography>
           <Typography fontSize="0.85rem" color="#666">
-            {column.id ? (
-              <>{column.agency} / {column.account}</>
-            ) : <>Sem bancos</>}
+            {bankAccount.id ? `${bankAccount.agency} / ${bankAccount.number}` : 'Títulos sem uma conta bancária vinculada'}
           </Typography>
         </div>
       </div>
 
-      {column.id !== null && (
+      {bankAccount.id !== null && (
         <>
-          <IconButton
-            size="small"
-            aria-controls={open ? 'column-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? 'true' : undefined}
-            onClick={handleOpenMenu}
-          >
+          <IconButton size="small" onClick={handleOpenMenu}>
             <i className="ri-more-2-line" style={{ fontSize: 20 }}></i>
           </IconButton>
 
-          <Menu
-            id="column-menu"
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleCloseMenu}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-          >
+          <Menu anchorEl={anchorEl} open={open} onClose={handleCloseMenu}>
             <MenuItem onClick={handleGenerateRemessaClick}>Gerar Remessa</MenuItem>
             <MenuItem onClick={handleExportCsvClick}>Exportar CSV</MenuItem>
           </Menu>
@@ -197,20 +192,23 @@ const ColumnHeader = ({ column, onGenerateRemessa, onExportCsv }) => {
   )
 }
 
-const KanbanList = ({ column, tasks, columns, setColumns, setTasks }) => {
-  const [tasksList, setTasksList] = useState([])
-
-  const dragData = useRef({
-    draggedTask: null,
-    originColumnId: null,
-    dragGhost: null,
-  })
+const KanbanList = ({
+  bankAccount,
+  installments,
+  bankAccounts,
+  setBankAccounts,
+  setInstallments,
+  loadingInstallmentIds,
+  addLoadingInstallment,
+  removeLoadingInstallment
+}) => {
+  const [installmentsList, setInstallmentsList] = useState([])
+  const dragData = useRef({ draggedInstallment: null, originBankAccountId: null, dragGhost: null })
 
   useEffect(() => {
-    const taskIds = columns.find((col) => col.id === column.id)?.taskIds || []
-    const filteredTasks = tasks.filter((task) => task && taskIds.includes(task.id))
-    setTasksList(filteredTasks)
-  }, [columns, tasks, column.id])
+    const installmentIds = bankAccounts.find((col) => col.id === bankAccount.id)?.taskIds || []
+    setInstallmentsList(installments.filter((installment) => installment && installmentIds.includes(installment.id)))
+  }, [bankAccounts, installments, bankAccount.id])
 
   const createDragGhost = (target, clientX, clientY) => {
     const ghost = target.cloneNode(true)
@@ -219,232 +217,176 @@ const KanbanList = ({ column, tasks, columns, setColumns, setTasks }) => {
     ghost.style.opacity = "0.8"
     ghost.style.zIndex = "1000"
     ghost.style.width = `${target.offsetWidth}px`
-    ghost.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)"
-    ghost.style.borderRadius = "4px"
-    ghost.style.backgroundColor = "white"
     ghost.style.top = `${clientY}px`
     ghost.style.left = `${clientX}px`
+    ghost.style.backgroundColor = "white"
+    ghost.style.borderRadius = "4px"
     document.body.appendChild(ghost)
     return ghost
   }
 
-  const handleMouseDown = (e, task) => {
+  const handleMouseDown = (e, installment) => {
     e.preventDefault()
-    dragData.current.draggedTask = task
-    dragData.current.originColumnId = column.id
-    dragData.current.dragGhost = createDragGhost(e.currentTarget, e.clientX, e.clientY)
-
+    dragData.current = {
+      draggedInstallment: installment,
+      originBankAccountId: bankAccount?.id,
+      dragGhost: createDragGhost(e.currentTarget, e.clientX, e.clientY),
+    }
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("mouseup", handleMouseUp)
-
     document.body.style.userSelect = "none"
   }
 
   const handleMouseMove = (e) => {
-    const { dragGhost } = dragData.current
-    if (!dragGhost) return
-
-    dragGhost.style.top = `${e.clientY + 8}px`
-    dragGhost.style.left = `${e.clientX + 8}px`
-  }
-
-  const removeTaskFromColumn = (cols, columnId, taskId) => {
-    return cols.map((col) => {
-      if (col.id === columnId) {
-        return { ...col, taskIds: col.taskIds.filter((id) => id !== taskId) }
-      }
-      return col
-    })
-  }
-
-  const insertTaskInColumn = (cols, columnId, taskId, index) => {
-    return cols.map((col) => {
-      if (col.id === columnId) {
-        const newTaskIds = [...col.taskIds]
-        newTaskIds.splice(index, 0, taskId)
-        return { ...col, taskIds: newTaskIds }
-      }
-      return col
-    })
+    const ghost = dragData.current.dragGhost
+    if (ghost) {
+      ghost.style.top = `${e.clientY + 8}px`
+      ghost.style.left = `${e.clientX + 8}px`
+    }
   }
 
   const detectDropPosition = (e) => {
-    const columnsElements = document.querySelectorAll("[data-column-id]")
-    for (const colEl of columnsElements) {
-      const rect = colEl.getBoundingClientRect()
+    const bankAccountElements = document.querySelectorAll("[data-bank-account-id]")
+    for (const baEl of bankAccountElements) {
+      const rect = baEl.getBoundingClientRect()
       if (
-        e.clientX >= rect.left &&
-        e.clientX <= rect.right &&
-        e.clientY >= rect.top &&
-        e.clientY <= rect.bottom
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom
       ) {
-        let columnId = colEl.getAttribute("data-column-id")
-        if (columnId === "null") {
-          columnId = null
-        } else {
-          columnId = Number(columnId)
-        }
-
-        const children = Array.from(colEl.querySelectorAll(".task-wrapper"))
+        let bankAccountId = baEl.getAttribute("data-bank-account-id")
+        bankAccountId = bankAccountId === "null" ? null : Number(bankAccountId)
+        const children = Array.from(baEl.querySelectorAll(".task-wrapper"))
         for (let i = 0; i < children.length; i++) {
           const childRect = children[i].getBoundingClientRect()
           if (e.clientY < childRect.top + childRect.height / 2) {
-            return { columnId, index: i }
+            return { bankAccountId, index: i }
           }
         }
-        return { columnId, index: children.length }
+        return { bankAccountId, index: children.length }
       }
     }
     return null
   }
 
+  const removeInstallmentFromBankAccount = (bankAccounts, bankAccountId, installmentId) => bankAccounts.map((ba) =>
+    ba.id === bankAccountId
+      ? { ...ba, taskIds: ba.taskIds.filter((id) => id !== installmentId) }
+      : ba
+  )
+
+  const insertInstallmentInBankAccount = (bankAccounts, bankAccountId, installmentId, index) => bankAccounts.map((ba) =>
+    ba.id === bankAccountId
+      ? { ...ba, taskIds: [...ba.taskIds.slice(0, index), installmentId, ...ba.taskIds.slice(index)] }
+      : ba
+  )
+
   const handleMouseUp = async (e) => {
-    const { draggedTask, originColumnId, dragGhost } = dragData.current
-    if (dragGhost) {
-      document.body.removeChild(dragGhost)
-      dragData.current.dragGhost = null
-    }
+    const { draggedInstallment, originBankAccountId, dragGhost } = dragData.current
+    if (dragGhost) document.body.removeChild(dragGhost)
     window.removeEventListener("mousemove", handleMouseMove)
     window.removeEventListener("mouseup", handleMouseUp)
-
     document.body.style.userSelect = ""
 
-    if (!draggedTask) return
+    if (!draggedInstallment) return
 
     const dropPos = detectDropPosition(e)
-    if (!dropPos) {
-      dragData.current.draggedTask = null
-      dragData.current.originColumnId = null
+    if (!dropPos) return
+
+    const { bankAccountId: destBankAccountId, index: destIndex } = dropPos
+
+    const originBA = bankAccounts.find((c) => c.id === originBankAccountId)
+    const fromIndex = originBA.taskIds.indexOf(draggedInstallment.id)
+
+    if (destBankAccountId === originBankAccountId && (fromIndex === destIndex || fromIndex + 1 === destIndex)) {
       return
     }
 
-    const { columnId: destColumnId, index: destIndex } = dropPos
+    // Atualiza o estado visual para novo local
+    let updatedBankAccounts = removeInstallmentFromBankAccount(bankAccounts, originBankAccountId, draggedInstallment.id)
+    updatedBankAccounts = insertInstallmentInBankAccount(updatedBankAccounts, destBankAccountId, draggedInstallment.id, destIndex)
+    setBankAccounts(updatedBankAccounts)
 
-    // Se mesmo lugar, não faz nada
-    if (destColumnId === originColumnId) {
-      const col = columns.find((c) => c.id === originColumnId)
-      const fromIndex = col.taskIds.indexOf(draggedTask.id)
-      if (fromIndex === destIndex || fromIndex + 1 === destIndex) {
-        dragData.current.draggedTask = null
-        dragData.current.originColumnId = null
-        return
-      }
-    }
+    addLoadingInstallment(draggedInstallment.id)
 
-    // Salva estado anterior para rollback se necessário
-    const previousColumns = [...columns]
-
-    // Atualiza colunas removendo da origem e inserindo no destino
-    let updatedColumns = removeTaskFromColumn(columns, originColumnId, draggedTask.id)
-    updatedColumns = insertTaskInColumn(updatedColumns, destColumnId, draggedTask.id, destIndex)
-    setColumns(updatedColumns)
-
-    const move = {
-          taskId: draggedTask.id,
-          toColumnId: destColumnId,
-        }
-
-        console.log(move)
-
-    // Agora chama a API com os dados do card e coluna destino
     try {
-      // Substitua essa URL pelo endpoint real da sua API
-      const response = await fetch("https://google213111.com/api/moveTask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(move),
-      })
-
-      if (!response.ok) {
-        throw new Error("Falha ao mover tarefa")
-      }
-
-      // Se quiser, pode tratar resposta da API aqui
+      await updateInstallment({id: draggedInstallment.id, bankAccountId: destBankAccountId})
     } catch (error) {
-      // Se a API falhar, volta para o estado anterior
-      setColumns(previousColumns)
-      alert("Erro ao mover tarefa, operação revertida.")
+      setBankAccounts((prev) => {
+        let reverted = removeInstallmentFromBankAccount(prev, destBankAccountId, draggedInstallment.id)
+        reverted = insertInstallmentInBankAccount(reverted, originBankAccountId, draggedInstallment.id, fromIndex)
+        return reverted
+      })
+      alert(`Erro ao mover tarefa #${draggedInstallment.id}, operação revertida.`)
+    } finally {
+      removeLoadingInstallment(draggedInstallment.id)
     }
-
-    dragData.current.draggedTask = null
-    dragData.current.originColumnId = null
   }
 
-
-  const addNewTask = (title) => {
-    const maxId = tasks.length > 0 ? Math.max(...tasks.map((t) => t.id || 0)) : 0
-    const newTask = { id: maxId + 1, title }
-    setTasks((prev) => [...prev, newTask])
-    setColumns((prev) =>
-      prev.map((col) =>
-        col.id === column.id ? { ...col, taskIds: [...col.taskIds, newTask.id] } : col
+  const addNewInstallment = (title) => {
+    const maxId = installments.length > 0 ? Math.max(...installments.map(t => t.id || 0)) : 0
+    const newInstallment = { id: maxId + 1, title }
+    setInstallments((prev) => [...prev, newInstallment])
+    setBankAccounts((prev) =>
+      prev.map((ba) =>
+        ba.id === bankAccount.id
+          ? { ...ba, taskIds: [...ba.taskIds, newInstallment.id] }
+          : ba
       )
     )
   }
 
   return (
     <div
-      data-column-id={column.id === null ? "null" : column.id}
-      style={{
-        width: "300px",
-        padding: "0.5rem",
-        backgroundColor: "#f4f5f7",
-        borderRadius: 4,
-        marginRight: 8,
-        display: "flex",
-        flexDirection: "column",
-      }}
+      data-bank-account-id={bankAccount.id === null ? "null" : bankAccount.id}
+      style={{ width: "320px", padding: "0.5rem", backgroundColor: "#f4f5f7", borderRadius: 4, marginRight: 8, display: "flex", flexDirection: "column", height: "100%" }}
     >
-        <ColumnHeader column={column} />
-        <div style={{ flexGrow: 1 }}>
-            {tasksList.map((task) => (
-                <div
-                key={task.id}
-                className="task-wrapper"
-                onMouseDown={(e) => handleMouseDown(e, task)}
-                style={{
-                    cursor: "grab",
-                    userSelect: "none",
-                    marginBottom: 8,
-                }}
-                >
-                <TaskCard task={task} />
-                </div>
-            ))}
-
-            {/* Adiciona o form logo após as tasks */}
-            <NewTask addTask={addNewTask} />
-        </div>
+      <ColumnHeader bankAccount={bankAccount} />
+      <div style={{ flexGrow: 1, overflowY: "auto" }} className="scroll-smooth">
+        {installmentsList.map((installment) => (
+          <div
+            key={installment.id}
+            className="task-wrapper"
+            onMouseDown={(e) => handleMouseDown(e, installment)}
+            style={{ cursor: "grab", userSelect: "none", marginBottom: 8 }}
+          >
+            <InstallmentCard installment={installment} loading={loadingInstallmentIds.includes(installment.id)} />
+          </div>
+        ))}
+        {/*<NewInstallment addInstallment={addNewInstallment} />*/}
+      </div>
     </div>
   )
 }
 
-const KanbanBoard = ({initialBankAccounts, initialInstallments}) => {
+const KanbanBoard = ({ initialBankAccounts, initialInstallments }) => {
+  const [installments, setInstallments] = useState(initialInstallments)
+  const [bankAccounts, setBankAccounts] = useState(initialBankAccounts)
+  const [loadingInstallmentIds, setLoadingInstallmentIds] = useState([])
 
-  console.log(initialInstallments)
+  const addLoadingInstallment = (installmentId) =>
+    setLoadingInstallmentIds((prev) => [...new Set([...prev, installmentId])])
+  const removeLoadingInstallment = (installmentId) =>
+    setLoadingInstallmentIds((prev) => prev.filter((id) => id !== installmentId))
 
-  const [tasks, setTasks] = useState(initialInstallments)
-
-  const [columns, setColumns] = useState(initialBankAccounts)
-
-    return (
-        <div className="flex items-start gap-6" style={{ height: "100%" }}>
-            <div className="flex gap-6" style={{ height: "100%" }}>
-                {columns.map((col) => (
-                <KanbanList
-                    key={col.id === null ? "null" : col.id}
-                    column={col}
-                    tasks={tasks}
-                    columns={columns}
-                    setColumns={setColumns}
-                    setTasks={setTasks}
-                />
-                ))}
-            </div>
-        </div>
-    )
+  return (
+    <div className="flex items-start gap-6" style={{ height: "100%" }}>
+      <div className="flex gap-6" style={{ height: "100%" }}>
+        {bankAccounts.map((ba) => (
+          <KanbanList
+            key={ba.id === null ? "null" : ba.id}
+            bankAccount={ba}
+            installments={installments}
+            bankAccounts={bankAccounts}
+            setBankAccounts={setBankAccounts}
+            setInstallments={setInstallments}
+            loadingInstallmentIds={loadingInstallmentIds}
+            addLoadingInstallment={addLoadingInstallment}
+            removeLoadingInstallment={removeLoadingInstallment}
+          />
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default KanbanBoard

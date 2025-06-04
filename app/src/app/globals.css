@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Scroll suave e estilizado */
+.scroll-smooth::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-smooth::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-smooth::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.scroll-smooth {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+  scroll-behavior: smooth;
+}
+
+
 :root {
   --border-radius: var(--mui-shape-borderRadius);
   --border-color: var(--mui-palette-divider);

@@ -13,6 +13,8 @@ export async function getBankAccounts() {
         ],
         where: [{ isAtivo: true }]
     })
+
+    console.log(bankAccounts)
         
     const financialMovementInstallments = await db.FinancialMovementInstallment.findAll({
         include: [
@@ -42,6 +44,10 @@ export async function getBankAccounts() {
         title: item.bank?.description,
         agency: item.agency,
         number: item.number,
+        bank: {
+            name: item.bank?.name,
+            icon: item.bank?.icon,
+        },
         taskIds: _.filter(wFinancialMovementInstallments, (installment) => {
             return installment.bankAccountId === item.codigo_conta_bancaria
         }).map(item => Number(item.id)).slice(0, 10)
@@ -52,7 +58,7 @@ export async function getBankAccounts() {
         columns: [
             {
                 id: null,
-                title: '[Nenhum]',
+                bank: { name: '[Nenhum]'},
                 //taskIds: wFinancialMovementInstallments.map(item => item.id)
                 taskIds: _.filter(wFinancialMovementInstallments, (installment) => !installment.bankAccountId).map(item => Number(item.id)).slice(0, 10)
             },
@@ -63,12 +69,10 @@ export async function getBankAccounts() {
     }
 }
 
-export async function updateTaskOrder(columnId, taskIds) {
-  const res = await fetch(`/api/kanban/update-column`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ columnId, taskIds })
-  })
-  if (!res.ok) throw new Error('Erro ao atualizar coluna')
-  return res.json()
+export async function updateInstallment({id, bankAccountId}) {
+  
+    const db = new AppContext()
+
+    await db.FinancialMovementInstallment.update({bankAccountId}, {where: [{codigo_movimento_detalhe: id}]})
+
 }
