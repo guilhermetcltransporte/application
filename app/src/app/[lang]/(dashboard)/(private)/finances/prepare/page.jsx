@@ -4,7 +4,7 @@
 import classnames from 'classnames'
 
 // Component Imports
-import KanbanBoard from '@views/apps/kanban/KanbanBoard'
+import KanbanBoard from '@views/apps/kanban'
 
 // Util Imports
 import { commonLayoutClasses } from '@layouts/utils/layoutClasses'
