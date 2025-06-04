@@ -47,7 +47,7 @@ const TaskCard = ({ task }) => {
             className="ri-calendar-line"
             style={{ fontSize: "0.875rem", lineHeight: 1 }}
           ></i>
-          <Typography variant='body2' color='text.secondary'>{task.dueDate}</Typography>
+          <Typography variant='body2' color='text.secondary'>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('pt-BR') : '-'}</Typography>
         </div>
       </div>
     </div>
@@ -421,21 +421,13 @@ const KanbanList = ({ column, tasks, columns, setColumns, setTasks }) => {
   )
 }
 
-const KanbanBoard = () => {
+const KanbanBoard = ({initialBankAccounts, initialInstallments}) => {
 
-  const [tasks, setTasks] = useState([
-    { id: 1, title: "Luz", amount: 120.5, dueDate: "2025-06-10", description: "Conta de energia elétrica", status: 'atrasada' },
-    { id: 2, title: "Internet", amount: 89.9, dueDate: "2025-06-08", description: "Plano mensal de internet" },
-    { id: 3, title: "Cartão de crédito", amount: 2500, dueDate: "2025-06-15", description: "Fatura do cartão Nubank" },
-    { id: 4, title: "Aluguel", amount: 1800, dueDate: "2025-06-05", description: "Pagamento mensal do aluguel" },
-  ])
+  console.log(initialInstallments)
 
-  const [columns, setColumns] = useState([
-    { id: null, bankIcon: '', title: "Sem Conta", taskIds: [] },
-    { id: 1, bankIcon: 'https://yt3.googleusercontent.com/YoY6PQUzk6UXJEW8sTYs8zf_TfPLHNLSim65mswp_w5CX0jYgtl_le41QPRwoI1Hyj4OM2q_=s900-c-k-c0x00ffffff-no-rj', title: "Banco do Brasil", agency: "1234-5", account: "000123-4", taskIds: [1, 2] },
-    { id: 2, bankIcon: 'https://www.mundorh.com.br/wp-content/uploads/2021/05/Novo-Logo-002.jpg', title: "Nubank", agency: "0001", account: "12345678-9", taskIds: [3] },
-    { id: 3, bankIcon: 'https://play-lh.googleusercontent.com/ReQEaxm44OuduIlJEVO_-xs9iZXSyRNdzGKrONYoLSgAdOzyhPKTb1xuuoPXK6tABm0', title: "Bradesco", agency: "4567-8", account: "987654-3", taskIds: [4] },
-  ])
+  const [tasks, setTasks] = useState(initialInstallments)
+
+  const [columns, setColumns] = useState(initialBankAccounts)
 
     return (
         <div className="flex items-start gap-6" style={{ height: "100%" }}>
