@@ -1,56 +1,60 @@
+// KanbanBoard.jsx (Refatorado 100% com states locais)
 'use client'
 import { useEffect, useState } from 'react'
-
-// Third-party imports
 import { useDragAndDrop } from '@formkit/drag-and-drop/react'
 import { animations } from '@formkit/drag-and-drop'
-import { useDispatch, useSelector } from 'react-redux'
 
-// Slice Imports
-import { addColumn, updateColumns } from '@/redux-store/slices/kanban'
-
-// Component Imports
 import KanbanList from './KanbanList'
 import NewColumn from './NewColumn'
 import KanbanDrawer from './KanbanDrawer'
+import { getBankAccounts } from './index.controller'
 
-const KanbanBoard = ({initialBankAccounts, initialFinancialMovementIntallments}) => {
-
-  const [bankAccounts, setBankAccounts] = useState(initialBankAccounts || [])
-  const [financialMovementIntallments, setFinancialMovementIntallments] = useState(initialFinancialMovementIntallments || [])
-
-  // State
+const KanbanBoard = () => {
+  const [columns, setColumns] = useState([])
+  const [tasks, setTasks] = useState([])
+  const [currentTaskId, setCurrentTaskId] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  // Hooks
-  const kanbanStore = useSelector(state => state.kanbanReducer)
+  useEffect(() => {
+    getBankAccounts().then(data => {
+      setColumns(data.columns)
+      setTasks(data.tasks)
+      setCurrentTaskId(data.currentTaskId)
+    })
+  }, [])
 
-  const dispatch = useDispatch()
-
-  const [boardRef, columns, setColumns] = useDragAndDrop(bankAccounts, {
+  const [boardRef, orderedColumns, setOrderedColumns] = useDragAndDrop(columns || [], {
     plugins: [animations()],
     dragHandle: '.list-handle'
   })
 
-  // Add New Column
+  useEffect(() => {
+    if (JSON.stringify(orderedColumns) !== JSON.stringify(columns)) {
+      setColumns(orderedColumns)
+    }
+  }, [orderedColumns])
+
   const addNewColumn = title => {
-
-    const maxId = Math.max(...bankAccounts.map(column => column.id))
-
-    dispatch(addColumn(title))
-
-    setColumns([...bankAccounts, { id: maxId + 1, title, taskIds: [] }])
-
+    const maxId = columns.length > 0 ? Math.max(...columns.map(col => col.id || 0)) : 0
+    const newColumn = { id: maxId + 1, title, taskIds: [] }
+    setColumns(prev => [...prev, newColumn])
   }
 
-  // To get the current task for the drawer
-  const currentTask = financialMovementIntallments.find(item => item.id === kanbanStore.id)
+  const updateTask = updatedTask => {
+    setTasks(prev => prev.map(task => task.id === updatedTask.id ? updatedTask : task))
+  }
 
-  // Update Columns on Drag and Drop
-  useEffect(() => {
-    if (columns !== kanbanStore.columns) dispatch(updateColumns(columns))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns])
+  const deleteTask = taskId => {
+    setTasks(prev => prev.filter(task => task.id !== taskId))
+    setColumns(prev => prev.map(col => ({
+      ...col,
+      taskIds: col.taskIds.filter(id => id !== taskId)
+    })))
+  }
+
+  const currentTask = tasks.find(task => task.id === currentTaskId)
+
+  if (!columns || columns.length === 0) return <p>Carregando Kanban...</p>
 
   return (
     <div className='flex items-start gap-6'>
@@ -58,14 +62,14 @@ const KanbanBoard = ({initialBankAccounts, initialFinancialMovementIntallments})
         {columns.map(column => (
           <KanbanList
             key={column.id}
-            dispatch={dispatch}
             column={column}
-            store={kanbanStore}
-            setDrawerOpen={setDrawerOpen}
             columns={columns}
             setColumns={setColumns}
+            tasks={column.taskIds.map(id => tasks.find(task => task.id === id))}
+            setTasks={setTasks}
+            setDrawerOpen={setDrawerOpen}
             currentTask={currentTask}
-            tasks={column.taskIds.map(id => financialMovementIntallments.find(item => item.id === id))}
+            setCurrentTaskId={setCurrentTaskId}
           />
         ))}
       </div>
@@ -75,9 +79,13 @@ const KanbanBoard = ({initialBankAccounts, initialFinancialMovementIntallments})
           task={currentTask}
           drawerOpen={drawerOpen}
           setDrawerOpen={setDrawerOpen}
-          dispatch={dispatch}
+          tasks={tasks}
+          setTasks={setTasks}
           columns={columns}
           setColumns={setColumns}
+          setCurrentTaskId={setCurrentTaskId}
+          updateTask={updateTask}
+          deleteTask={deleteTask}
         />
       )}
     </div>

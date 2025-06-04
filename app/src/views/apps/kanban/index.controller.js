@@ -33,29 +33,42 @@ export async function getBankAccounts() {
 
     const wFinancialMovementInstallments = _.map(financialMovementInstallments, item => ({
         ...item.get({ plain: true }),
-        id: item.codigo_movimento_detalhe,
+        id: Number(item.codigo_movimento_detalhe),
     }))
 
     const wBankAccounts = _.map(bankAccounts, item => ({
-        ...item.get({ plain: true }),
-        id: item.codigo_conta_bancaria,
+        //...item.get({ plain: true }),
+        id: Number(item.codigo_conta_bancaria),
         title: item.bank?.description,
+        agency: item.agency,
+        number: item.number,
         taskIds: _.filter(wFinancialMovementInstallments, (installment) => {
             return installment.bankAccountId === item.codigo_conta_bancaria
-        }).map(item => item.id).slice(0, 10)
+        }).map(item => Number(item.id)).slice(0, 10)
     }))
 
     // Adiciona o item com id null no início
     return {
-        bankAccounts: [
+        columns: [
             {
                 id: null,
                 title: '[Nenhum]',
                 //taskIds: wFinancialMovementInstallments.map(item => item.id)
-                taskIds: _.filter(wFinancialMovementInstallments, (installment) => !installment.bankAccountId).map(item => item.id).slice(0, 10)
+                taskIds: _.filter(wFinancialMovementInstallments, (installment) => !installment.bankAccountId).map(item => Number(item.id)).slice(0, 10)
             },
             ...wBankAccounts
         ],
-        financialInstallments: wFinancialMovementInstallments
+        tasks: wFinancialMovementInstallments,
+        currentTaskId: null
     }
+}
+
+export async function updateTaskOrder(columnId, taskIds) {
+  const res = await fetch(`/api/kanban/update-column`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ columnId, taskIds })
+  })
+  if (!res.ok) throw new Error('Erro ao atualizar coluna')
+  return res.json()
 }

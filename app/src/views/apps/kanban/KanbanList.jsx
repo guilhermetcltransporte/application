@@ -1,193 +1,108 @@
-// React Imports
-import { useEffect, useState } from 'react'
-
-// MUI Imports
+// KanbanList.jsx (agora persiste taskIds via API ao arrastar)
+import { useEffect, useState, useRef } from 'react'
 import Typography from '@mui/material/Typography'
 import InputBase from '@mui/material/InputBase'
 import IconButton from '@mui/material/IconButton'
-
-// Third-party imports
 import { useDragAndDrop } from '@formkit/drag-and-drop/react'
 import { animations } from '@formkit/drag-and-drop'
 import classnames from 'classnames'
-
-// Slice Imports
-import { addTask, editColumn, deleteColumn, updateColumnTaskIds } from '@/redux-store/slices/kanban'
-
-// Component Imports
 import OptionMenu from '@core/components/option-menu'
 import TaskCard from './TaskCard'
 import NewTask from './NewTask'
-
-// Styles Imports
 import styles from './styles.module.css'
+import { updateTaskOrder } from './index.controller'
 
-const KanbanList = props => {
-  // Props
-  const { column, tasks, dispatch, store, setDrawerOpen, columns, setColumns, currentTask } = props
-
-  // States
+const KanbanList = ({ column, tasks, setTasks, columns, setColumns, setDrawerOpen, currentTask, setCurrentTaskId }) => {
   const [editDisplay, setEditDisplay] = useState(false)
   const [title, setTitle] = useState(column.title)
+  const prevTaskIdsRef = useRef(column.taskIds)
 
-  // Hooks
   const [tasksListRef, tasksList, setTasksList] = useDragAndDrop(tasks, {
     group: 'tasksList',
     plugins: [animations()],
-    draggable: el => el.classList.contains('item-draggable'),
+    draggable: el => el.classList.contains('item-draggable')
   })
 
-  // Add New Task
   const addNewTask = title => {
-    dispatch(addTask({ columnId: column.id, title: title }))
-    setTasksList([...tasksList, { id: store.tasks[store.tasks.length - 1].id + 1, title }])
-
-    const newColumns = columns.map(col => {
-      if (col.id === column.id) {
-        return { ...col, taskIds: [...col.taskIds, store.tasks[store.tasks.length - 1].id + 1] }
-      }
-
-      return col
-    })
-
-    setColumns(newColumns)
+    const maxId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id || 0)) : 0
+    const newTask = { id: maxId + 1, title }
+    setTasks(prev => [...prev, newTask])
+    setTasksList(prev => [...prev, newTask])
+    setColumns(prev => prev.map(col => col.id === column.id ? { ...col, taskIds: [...col.taskIds, newTask.id] } : col))
   }
 
-  // Handle Submit Edit
   const handleSubmitEdit = e => {
     e.preventDefault()
-    setEditDisplay(!editDisplay)
-    dispatch(editColumn({ id: column.id, title }))
-
-    const newColumn = columns.map(col => {
-      if (col.id === column.id) {
-        return { ...col, title }
-      }
-
-      return col
-    })
-
-    setColumns(newColumn)
+    setEditDisplay(false)
+    setColumns(prev => prev.map(col => col.id === column.id ? { ...col, title } : col))
   }
 
-  // Cancel Edit
   const cancelEdit = () => {
-    setEditDisplay(!editDisplay)
+    setEditDisplay(false)
     setTitle(column.title)
   }
 
-  // Delete Column
   const handleDeleteColumn = () => {
-    dispatch(deleteColumn({ columnId: column.id }))
-    setColumns(columns.filter(col => col.id !== column.id))
+    setColumns(prev => prev.filter(col => col.id !== column.id))
   }
 
-  // Update column taskIds on drag and drop
   useEffect(() => {
-    if (tasksList !== tasks) {
-      dispatch(updateColumnTaskIds({ id: column.id, tasksList }))
+    const currentTaskIds = tasksList.map(t => t.id)
+    if (JSON.stringify(prevTaskIdsRef.current) !== JSON.stringify(currentTaskIds)) {
+      prevTaskIdsRef.current = currentTaskIds
+      setColumns(prev => prev.map(col => col.id === column.id ? { ...col, taskIds: currentTaskIds } : col))
+      //updateTaskOrder(column.id, currentTaskIds).catch(console.error)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasksList])
 
-  // To update the tasksList when a task is edited
   useEffect(() => {
-    const newTasks = tasksList.map(task => {
-      if (task?.id === currentTask?.id) {
-        return currentTask
-      }
-
-      return task
-    })
-
-    if (currentTask !== tasksList.find(task => task?.id === currentTask?.id)) {
-      setTasksList(newTasks)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const updatedTasks = tasksList.map(task => task?.id === currentTask?.id ? currentTask : task)
+    setTasksList(updatedTasks)
   }, [currentTask])
 
-  // To update the tasksList when columns are updated
   useEffect(() => {
-    let taskIds = []
-
-    columns.map(col => {
-      taskIds = [...taskIds, ...col.taskIds]
-    })
-    const newTasksList = tasksList.filter(task => task && taskIds.includes(task.id))
-
-    setTasksList(newTasksList)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const taskIds = columns.find(col => col.id === column.id)?.taskIds || []
+    const filteredTasks = tasks.filter(task => task && taskIds.includes(task.id))
+    setTasksList(filteredTasks)
   }, [columns])
 
   return (
     <div ref={tasksListRef} className='flex flex-col is-[16.5rem]'>
       {editDisplay ? (
-        <form
-          className='flex items-center mbe-4'
-          onSubmit={handleSubmitEdit}
-          onKeyDown={e => {
-            if (e.key === 'Escape') {
-              cancelEdit()
-            }
-          }}
-        >
+        <form className='flex items-center mbe-4' onSubmit={handleSubmitEdit} onKeyDown={e => e.key === 'Escape' && cancelEdit()}>
           <InputBase value={title} autoFocus onChange={e => setTitle(e.target.value)} required />
-          <IconButton color='success' size='small' type='submit'>
-            <i className='ri-check-line' />
-          </IconButton>
-          <IconButton color='error' size='small' type='reset' onClick={cancelEdit}>
-            <i className='ri-close-line' />
-          </IconButton>
+          <IconButton color='success' size='small' type='submit'><i className='ri-check-line' /></IconButton>
+          <IconButton color='error' size='small' type='reset' onClick={cancelEdit}><i className='ri-close-line' /></IconButton>
         </form>
       ) : (
-        <div
-          id='no-drag'
-          className={classnames(
-            'flex items-center justify-between is-[16.5rem] bs-[2.125rem] mbe-4',
-            styles.kanbanColumn
-          )}
-        >
-          <div className='flex flex-col overflow-hidden'>
-            <Typography variant='h5' noWrap className='truncate'>
-              {column.title}
-            </Typography>
-            {column.title && (
-              <Typography variant='caption' color='textSecondary' className='truncate'>
-                {column.id} - {column.agency} / {column.number}
-              </Typography>
-            )}
-          </div>
+        <div className={classnames('flex items-center justify-between is-[16.5rem] bs-[2.125rem] mbe-4', styles.kanbanColumn)}>
+          <Typography variant='h5' noWrap className='max-is-[80%]'>{column.title}</Typography>
           <div className='flex items-center'>
             <i className={classnames('ri-drag-move-fill text-textSecondary list-handle', styles.drag)} />
             <OptionMenu
               iconClassName='text-xl text-textPrimary'
               options={[
-                {
-                  text: 'Gerar remessa',
-                  icon: 'ri-upload-2-line text-base',
-                  menuItemProps: { className: 'flex items-center gap-2', onClick: handleDeleteColumn }
-                }
+                { text: 'Edit', icon: 'ri-pencil-line text-base', menuItemProps: { className: 'flex items-center gap-2', onClick: () => setEditDisplay(true) } },
+                { text: 'Delete', icon: 'ri-delete-bin-line text-base', menuItemProps: { className: 'flex items-center gap-2', onClick: handleDeleteColumn } }
               ]}
             />
           </div>
         </div>
       )}
-      {tasksList.map(
-        task =>
-          task && (
-            <TaskCard
-              key={task.id}
-              task={task}
-              dispatch={dispatch}
-              column={column}
-              setColumns={setColumns}
-              columns={columns}
-              setDrawerOpen={setDrawerOpen}
-              tasksList={tasksList}
-              setTasksList={setTasksList}
-            />
-          )
-      )}
+      {tasksList.map(task => task && (
+        <TaskCard
+          key={task.id}
+          task={task}
+          column={column}
+          columns={columns}
+          setColumns={setColumns}
+          tasksList={tasksList}
+          setTasksList={setTasksList}
+          setDrawerOpen={setDrawerOpen}
+          setCurrentTaskId={setCurrentTaskId}
+          setTasks={setTasks}
+        />
+      ))}
       <NewTask addTask={addNewTask} />
     </div>
   )

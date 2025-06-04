@@ -1,7 +1,5 @@
-// React Imports
+// KanbanDrawer.jsx (Corrigido loop infinito no useEffect)
 import { useEffect, useState, useRef } from 'react'
-
-// MUI Imports
 import Drawer from '@mui/material/Drawer'
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
@@ -16,62 +14,29 @@ import IconButton from '@mui/material/IconButton'
 import Button from '@mui/material/Button'
 import Tooltip from '@mui/material/Tooltip'
 import InputAdornment from '@mui/material/InputAdornment'
-
-// Third-party Imports
 import { useForm, Controller } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { minLength, nonEmpty, object, pipe, string } from 'valibot'
-
-// Slice Imports
-import { editTask, deleteTask } from '@/redux-store/slices/kanban'
-
-// Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
-
-// Data Imports
 import { chipColor } from './TaskCard'
 
 const schema = object({
   title: pipe(string(), nonEmpty('Title is required'), minLength(1))
 })
 
-const KanbanDrawer = props => {
-  // Props
-  const { drawerOpen, dispatch, setDrawerOpen, task, columns, setColumns } = props
-
-  // States
+const KanbanDrawer = ({ drawerOpen, setDrawerOpen, task, tasks, setTasks, columns, setColumns, setCurrentTaskId, updateTask, deleteTask }) => {
   const [date, setDate] = useState(task.dueDate)
   const [badgeText, setBadgeText] = useState(task.badgeText || [])
   const [fileName, setFileName] = useState('')
   const [comment, setComment] = useState('')
-
-  // Refs
   const fileInputRef = useRef(null)
 
-  // Hooks
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm({
-    defaultValues: {
-      title: task.title
-    },
+  const { control, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: { title: task.title },
     resolver: valibotResolver(schema)
   })
 
-  // Handle File Upload
-  const handleFileUpload = event => {
-    const { files } = event.target
-
-    if (files && files.length !== 0) {
-      setFileName(files[0].name)
-    }
-  }
-
-  // Close Drawer
   const handleClose = () => {
     setDrawerOpen(false)
     reset({ title: task.title })
@@ -79,170 +44,102 @@ const KanbanDrawer = props => {
     setDate(task.dueDate)
     setFileName('')
     setComment('')
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // Update Task
-  const updateTask = data => {
-    dispatch(editTask({ id: task.id, title: data.title, badgeText, dueDate: date }))
+  const handleFileUpload = e => {
+    const { files } = e.target
+    if (files?.length) setFileName(files[0].name)
+  }
+
+  const handleUpdate = data => {
+    updateTask({ ...task, title: data.title, badgeText, dueDate: date })
     handleClose()
   }
 
-  // Handle Reset
-  const handleReset = () => {
-    setDrawerOpen(false)
-    dispatch(deleteTask(task.id))
-
-    const updatedColumns = columns.map(column => {
-      return {
-        ...column,
-        taskIds: column.taskIds.filter(taskId => taskId !== task.id)
-      }
-    })
-
-    setColumns(updatedColumns)
+  const handleDelete = () => {
+    deleteTask(task.id)
+    handleClose()
+    setCurrentTaskId(null)
   }
 
-  // To set the initial values according to the task
   useEffect(() => {
+    if (!drawerOpen) return
     reset({ title: task.title })
     setBadgeText(task.badgeText || [])
     setDate(task.dueDate)
-  }, [task, reset])
+  }, [drawerOpen])
 
   return (
-    <div>
-      <Drawer
-        open={drawerOpen}
-        anchor='right'
-        variant='temporary'
-        ModalProps={{ keepMounted: true }}
-        sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
-        onClose={handleClose}
-      >
-        <div className='flex justify-between items-center pli-5 plb-4 border-be'>
-          <Typography variant='h5'>Edit Task</Typography>
-          <IconButton onClick={handleClose} size='small'>
-            <i className='ri-close-line text-2xl' />
-          </IconButton>
-        </div>
-        <div className='p-6'>
-          <form className='flex flex-col gap-y-5' onSubmit={handleSubmit(updateTask)}>
-            <Controller
-              name='title'
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  fullWidth
-                  label='Title'
-                  {...field}
-                  error={Boolean(errors.title)}
-                  helperText={errors.title?.message}
-                />
-              )}
-            />
+    <Drawer open={drawerOpen} anchor='right' variant='temporary' ModalProps={{ keepMounted: true }} sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }} onClose={handleClose}>
+      <div className='flex justify-between items-center pli-5 plb-4 border-be'>
+        <Typography variant='h5'>Edit Task</Typography>
+        <IconButton onClick={handleClose} size='small'>
+          <i className='ri-close-line text-2xl' />
+        </IconButton>
+      </div>
+      <div className='p-6'>
+        <form className='flex flex-col gap-y-5' onSubmit={handleSubmit(handleUpdate)}>
+          <Controller name='title' control={control} render={({ field }) => (
+            <TextField fullWidth label='Title' {...field} error={Boolean(errors.title)} helperText={errors.title?.message} />
+          )} />
 
-            <AppReactDatepicker
-              selected={date ? new Date(date) : new Date()}
-              id='basic-input'
-              onChange={date => {
-                date !== null && setDate(date)
-              }}
-              placeholderText='Click to select a date'
-              customInput={<TextField label='Due Date' fullWidth />}
-            />
-            <FormControl fullWidth>
-              <InputLabel id='demo-multiple-chip-label'>Label</InputLabel>
-              <Select
-                multiple
-                label='Label'
-                value={badgeText || []}
-                onChange={e => setBadgeText(e.target.value)}
-                renderValue={selected => (
-                  <div className='flex flex-wrap gap-1'>
-                    {selected.map(value => (
-                      <Chip
-                        variant='tonal'
-                        label={value}
-                        key={value}
-                        onMouseDown={e => e.stopPropagation()}
-                        size='small'
-                        onDelete={() => setBadgeText(current => current.filter(item => item !== value))}
-                        color={chipColor[value]?.color}
-                      />
-                    ))}
-                  </div>
-                )}
-              >
-                {Object.keys(chipColor).map(chip => (
-                  <MenuItem key={chip} value={chip}>
-                    <Checkbox checked={badgeText && badgeText.indexOf(chip) > -1} />
-                    <ListItemText primary={chip} />
-                  </MenuItem>
+          <AppReactDatepicker selected={date ? new Date(date) : new Date()} onChange={date => date && setDate(date)} placeholderText='Click to select a date' customInput={<TextField label='Due Date' fullWidth />} />
+
+          <FormControl fullWidth>
+            <InputLabel id='demo-multiple-chip-label'>Label</InputLabel>
+            <Select multiple label='Label' value={badgeText || []} onChange={e => setBadgeText(e.target.value)} renderValue={selected => (
+              <div className='flex flex-wrap gap-1'>
+                {selected.map(value => (
+                  <Chip key={value} label={value} onDelete={() => setBadgeText(prev => prev.filter(v => v !== value))} size='small' variant='tonal' color={chipColor[value]?.color} />
                 ))}
-              </Select>
-            </FormControl>
-            <div className='flex flex-col gap-y-1'>
-              <Typography variant='body2'>Assigned</Typography>
-              <div className='flex gap-1'>
-                {task.assigned?.map((avatar, index) => (
-                  <Tooltip title={avatar.name} key={index}>
-                    <CustomAvatar key={index} src={avatar.src} size={26} className='cursor-pointer' />
-                  </Tooltip>
-                ))}
-                <CustomAvatar size={26} className='cursor-pointer'>
-                  <i className='ri-add-line text-base text-textSecondary' />
-                </CustomAvatar>
               </div>
+            )}>
+              {Object.keys(chipColor).map(chip => (
+                <MenuItem key={chip} value={chip}>
+                  <Checkbox checked={badgeText.includes(chip)} />
+                  <ListItemText primary={chip} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <div className='flex flex-col gap-y-1'>
+            <Typography variant='body2'>Assigned</Typography>
+            <div className='flex gap-1'>
+              {task.assigned?.map((avatar, i) => (
+                <Tooltip title={avatar.name} key={i}>
+                  <CustomAvatar src={avatar.src} size={26} className='cursor-pointer' />
+                </Tooltip>
+              ))}
+              <CustomAvatar size={26} className='cursor-pointer'>
+                <i className='ri-add-line text-base text-textSecondary' />
+              </CustomAvatar>
             </div>
-            <div className='flex items-center gap-4'>
-              <TextField
-                fullWidth
-                label='Choose File'
-                variant='outlined'
-                value={fileName}
-                slotProps={{
-                  input: {
-                    readOnly: true,
-                    endAdornment: fileName ? (
-                      <InputAdornment position='end'>
-                        <IconButton size='small' edge='end' onClick={() => setFileName('')}>
-                          <i className='ri-close-line' />
-                        </IconButton>
-                      </InputAdornment>
-                    ) : null
-                  }
-                }}
-              />
-              <Button component='label' variant='outlined' htmlFor='contained-button-file'>
-                Choose
-                <input hidden id='contained-button-file' type='file' onChange={handleFileUpload} ref={fileInputRef} />
-              </Button>
-            </div>
-            <TextField
-              fullWidth
-              label='Comment'
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              multiline
-              rows={4}
-              placeholder='Write a Comment....'
-            />
-            <div className='flex gap-4'>
-              <Button variant='contained' color='primary' type='submit'>
-                Update
-              </Button>
-              <Button variant='outlined' color='error' type='reset' onClick={handleReset}>
-                Delete
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Drawer>
-    </div>
+          </div>
+
+          <div className='flex items-center gap-4'>
+            <TextField fullWidth label='Choose File' value={fileName} variant='outlined' slotProps={{ input: { readOnly: true, endAdornment: fileName && (
+              <InputAdornment position='end'>
+                <IconButton size='small' edge='end' onClick={() => setFileName('')}>
+                  <i className='ri-close-line' />
+                </IconButton>
+              </InputAdornment>
+            ) } }} />
+            <Button component='label' variant='outlined'>Choose
+              <input hidden type='file' onChange={handleFileUpload} ref={fileInputRef} />
+            </Button>
+          </div>
+
+          <TextField fullWidth label='Comment' multiline rows={4} value={comment} onChange={e => setComment(e.target.value)} placeholder='Write a Comment....' />
+
+          <div className='flex gap-4'>
+            <Button variant='contained' color='primary' type='submit'>Update</Button>
+            <Button variant='outlined' color='error' type='reset' onClick={handleDelete}>Delete</Button>
+          </div>
+        </form>
+      </div>
+    </Drawer>
   )
 }
 

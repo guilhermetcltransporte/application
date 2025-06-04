@@ -11,7 +11,7 @@ export const store = configureStore({
   reducer: {
     chatReducer,
     calendarReducer,
-    kanbanReducer,
+    kanban: kanbanReducer,
     emailReducer
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware({ serializableCheck: false })
