@@ -1,4 +1,3 @@
-// KanbanBoard.jsx (Refatorado 100% com states locais)
 'use client'
 import { useEffect, useState } from 'react'
 import { useDragAndDrop } from '@formkit/drag-and-drop/react'
@@ -7,23 +6,15 @@ import { animations } from '@formkit/drag-and-drop'
 import KanbanList from './KanbanList'
 import NewColumn from './NewColumn'
 import KanbanDrawer from './KanbanDrawer'
-import { getBankAccounts } from './index.controller'
 
-const KanbanBoard = () => {
-  const [columns, setColumns] = useState([])
-  const [tasks, setTasks] = useState([])
+const KanbanBoard = ({ initialBankAccounts = [], initialInstallments = [] }) => {
+
+  const [columns, setColumns] = useState(initialBankAccounts)
+  const [tasks, setTasks] = useState(initialInstallments)
   const [currentTaskId, setCurrentTaskId] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  useEffect(() => {
-    getBankAccounts().then(data => {
-      setColumns(data.columns)
-      setTasks(data.tasks)
-      setCurrentTaskId(data.currentTaskId)
-    })
-  }, [])
-
-  const [boardRef, orderedColumns, setOrderedColumns] = useDragAndDrop(columns || [], {
+  const [boardRef, orderedColumns, setOrderedColumns] = useDragAndDrop(columns, {
     plugins: [animations()],
     dragHandle: '.list-handle'
   })
@@ -54,8 +45,6 @@ const KanbanBoard = () => {
 
   const currentTask = tasks.find(task => task.id === currentTaskId)
 
-  if (!columns || columns.length === 0) return <p>Carregando Kanban...</p>
-
   return (
     <div className='flex items-start gap-6'>
       <div ref={boardRef} className='flex gap-6'>
@@ -65,7 +54,9 @@ const KanbanBoard = () => {
             column={column}
             columns={columns}
             setColumns={setColumns}
-            tasks={column.taskIds.map(id => tasks.find(task => task.id === id))}
+            tasks={column.taskIds
+              .map(id => tasks.find(task => task.id === id))
+              .filter(Boolean)}
             setTasks={setTasks}
             setDrawerOpen={setDrawerOpen}
             currentTask={currentTask}

@@ -48,10 +48,28 @@ const KanbanList = ({ column, tasks, setTasks, columns, setColumns, setDrawerOpe
 
   useEffect(() => {
     const currentTaskIds = tasksList.map(t => t.id)
-    if (JSON.stringify(prevTaskIdsRef.current) !== JSON.stringify(currentTaskIds)) {
+    const prevTaskIds = prevTaskIdsRef.current
+
+    if (JSON.stringify(prevTaskIds) !== JSON.stringify(currentTaskIds)) {
+      const isDestination = currentTaskIds.length > prevTaskIds.length
+
+      if (isDestination) {
+        const movedTaskId = currentTaskIds.find(id => !prevTaskIds.includes(id))
+
+        if (movedTaskId) {
+          console.log('✅ Task movida:', movedTaskId)
+          console.log('➡️  Coluna de destino:', column.id)
+          // Aqui você pode chamar updateTaskOrder(column.id, currentTaskIds)
+        }
+      }
+
       prevTaskIdsRef.current = currentTaskIds
-      setColumns(prev => prev.map(col => col.id === column.id ? { ...col, taskIds: currentTaskIds } : col))
-      //updateTaskOrder(column.id, currentTaskIds).catch(console.error)
+
+      setColumns(prev =>
+        prev.map(col =>
+          col.id === column.id ? { ...col, taskIds: currentTaskIds } : col
+        )
+      )
     }
   }, [tasksList])
 

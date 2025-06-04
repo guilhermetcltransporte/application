@@ -25,7 +25,7 @@ const KanbanPage = async () => {
         'is-full overflow-auto pis-2 -mis-2'
       )}
     >
-      <KanbanBoard initialBankAccounts={bankAccounts.bankAccounts} initialFinancialMovementIntallments={bankAccounts.financialInstallments} />
+      <KanbanBoard initialBankAccounts={bankAccounts.columns} initialInstallments={bankAccounts.tasks} />
     </div>
   )
 }
