@@ -107,7 +107,7 @@ export async function getStatement({companyIntegrationId, fileName}) {
         //statementData.id = undefined;
         //statementData.shippingCost = undefined;
         //statementData.statementId = statement2.id;              
-        statementData.date = item.DATE ? format(new Date(item.DATE), 'yyyy-MM-dd HH:mm:ss') : null
+        statementData.entryDate = item.DATE ? format(new Date(item.DATE), 'yyyy-MM-dd HH:mm:ss') : null
         statementData.description = item.DESCRIPTION
         statementData.sourceId = item.SOURCE_ID?.toString()
         statementData.orderId = item.ORDER_ID?.toString()

@@ -12,7 +12,7 @@ export class Statement {
 
   bankAccountId = {
     field: 'bankAccountId',
-    type: DataTypes.UUIDV4,
+    type: DataTypes.BIGINT,
   }
 
   sourceId = {

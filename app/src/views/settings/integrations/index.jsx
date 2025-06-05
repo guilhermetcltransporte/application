@@ -171,6 +171,12 @@ const Integrations = ({ integrations }) => {
                       justifyContent="space-between"
                       alignItems="center"
                     >
+                      
+                      <Switch
+                        checked={integration.isActive}
+                        onChange={() => handleToggleActive({ id: integration.id })}
+                      />
+
                       {/* Botão desconectar só aparece sempre se estiver ativo */}
                       {integration.isActive ? (
                         <Button
@@ -202,10 +208,6 @@ const Integrations = ({ integrations }) => {
                         )
                       )}
 
-                      <Switch
-                        checked={integration.isActive}
-                        onChange={() => handleToggleActive({ id: integration.id })}
-                      />
                     </Box>
                   </Box>
                 </Card>
@@ -269,6 +271,7 @@ const Integrations = ({ integrations }) => {
                   >
                     <Button
                       variant="outlined"
+                      color='success'
                       onClick={() => handleConnectClick(integration)}
                     >
                       Conectar

@@ -27,7 +27,7 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
 
   const [errorState, setErrorState] = useState(null)
 
-  const [initialUser, setInitialUser] = useState(null)
+  const [users, setUsers] = useState(null)
   const [shouldReset, setShouldReset] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -41,9 +41,9 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
 
         if (companyUserId) {
           const userData = await getCompanyUser({ id: companyUserId })
-          setInitialUser(userData?.user || null)
+          setUsers(userData?.user || null)
         } else {
-          setInitialUser(null)
+          setUsers(null)
         }
 
       } catch (error) {
@@ -73,14 +73,8 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
 
   return (
     <>
-      <Backdrop
-        open={loading}
-        sx={{
-          zIndex: (theme) => theme.zIndex.modal + 1,
-          color: '#fff',
-          flexDirection: 'column',
-        }}
-      >
+
+      <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff', flexDirection: 'column' }}>
         <CircularProgress color='inherit' />
         <Typography variant="h6" sx={{ mt: 2, color: '#fff' }}>
           Carregando...
@@ -106,7 +100,7 @@ export const ViewUser = ({ companyUserId, onClose, onSubmit }) => {
         <div className='p-5'>
           <Formik
             enableReinitialize
-            initialValues={{ user: initialUser }}
+            initialValues={{ user: users }}
             validationSchema={Yup.object({})}
             onSubmit={handleSubmit}
           >

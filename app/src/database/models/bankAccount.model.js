@@ -6,7 +6,7 @@ export class BankAccount {
     field: 'codigo_conta_bancaria',
     primaryKey: true,
     autoIncrement: true,
-    type: Sequelize.INTEGER
+    type: Sequelize.BIGINT
   }
 
   agency = {

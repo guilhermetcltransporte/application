@@ -43,20 +43,22 @@ const exampleTransactions = [
 ]
 
 function ExtratoScreen({ initialStatements }) {
+
   const [open, setOpen] = useState(false)
   const [statements, setStatements] = useState([...initialStatements])
   const [selectedStatement, setSelectedStatement] = useState(null)
-  const [detailsOpen, setDetailsOpen] = useState(false)
+
+  const [statementId, setStatementId] = useState(undefined)
 
   const fetch = async () => {
     const statements = await getStatements()
     setStatements(statements)
   }
 
-  const handleEdit = (statement) => {
-    statement.transactions = exampleTransactions
-    setSelectedStatement(statement)
-    setDetailsOpen(true)
+  const handleEdit = ({statementId}) => {
+    //statement.transactions = exampleTransactions
+    //setSelectedStatement({statementId})
+    setStatementId(statementId)
   }
 
   const handleDelete = (id) => {
@@ -124,7 +126,7 @@ function ExtratoScreen({ initialStatements }) {
                 <TableCell align="center">
                   <div className="action-buttons">
                     <Tooltip title="Editar">
-                      <IconButton onClick={() => handleEdit(statement)}>
+                      <IconButton onClick={() => handleEdit({statementId: statement.id})}>
                         <i className="ri-edit-2-line text-lg" />
                       </IconButton>
                     </Tooltip>
@@ -144,10 +146,10 @@ function ExtratoScreen({ initialStatements }) {
       <ViewAddStatement open={open} setOpen={setOpen} onSubmit={fetch} />
 
       <ViewStatementDetail
-        open={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
+        statementId={statementId}
+        onClose={() => setStatementId(undefined)}
+        onError={() => setStatementId(undefined)}
         statement={selectedStatement}
-        setStatement={setSelectedStatement}
       />
 
     </>

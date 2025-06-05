@@ -99,23 +99,27 @@ export class AppContext extends Sequelize {
 
     this.FinancialMovementInstallment.belongsTo(this.FinancialMovement, { as: 'financialMovement', foreignKey: 'codigo_movimento' })
     
-    this.FinancialMovement.belongsTo(this.Partner, { as: 'partner', foreignKey: 'codigo_pessoa' })
+    this.FinancialMovement.belongsTo(this.Partner, { as: 'partner', foreignKey: 'codigo_pessoa', targetKey: 'codigo_pessoa' })
     this.FinancialMovement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'codigo_conta' })
 
 
-    this.Statement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'bankAccountId' })
+    this.Statement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'bankAccountId', targetKey: 'codigo_conta_bancaria' })
+    this.Statement.hasMany(this.StatementData, { as: 'statementData', foreignKey: 'statementId' })
 
 
     this.User.hasMany(this.CompanyUser, { as: 'companyUsers', foreignKey: 'userId' })
     this.User.belongsTo(this.UserMember, { as: 'userMember', foreignKey: 'userId', targetKey: 'userId' })
 
 
+    this.Bank.addHook('afterFind', afterFind)
     this.BankAccount.addHook('afterFind', afterFind)
     this.Company.addHook('afterFind', afterFind)
     this.CompanyBusiness.addHook('afterFind', afterFind)
     this.CompanyIntegration.addHook('afterFind', afterFind)
     this.CompanyUser.addHook('afterFind', afterFind)
     this.Integration.addHook('afterFind', afterFind)
+    this.Statement.addHook('afterFind', afterFind)
+    this.StatementData.addHook('afterFind', afterFind)
     this.User.addHook('afterFind', afterFind)
     this.UserMember.addHook('afterFind', afterFind)
 
