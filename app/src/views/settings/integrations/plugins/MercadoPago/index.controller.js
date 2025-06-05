@@ -112,6 +112,7 @@ export async function getStatement({companyIntegrationId, fileName}) {
         statementData.sourceId = item.SOURCE_ID?.toString()
         statementData.orderId = item.ORDER_ID?.toString()
         statementData.amount = parseFloat(item.GROSS_AMOUNT)
+        statementData.fee = parseFloat(item.MP_FEE_AMOUNT)
         //statementData.coupon = parseFloat(item.COUPON_AMOUNT);
         //statementData.fee = parseFloat(item.MP_FEE_AMOUNT);
         //statementData.shipping = parseFloat(item.SHIPPING_FEE_AMOUNT);
@@ -119,12 +120,9 @@ export async function getStatement({companyIntegrationId, fileName}) {
         statementData.credit = parseFloat(item.NET_CREDIT_AMOUNT)
         statementData.balance = parseFloat(item.BALANCE_AMOUNT)
         statementData.extra = {
-            fee: parseFloat(item.MP_FEE_AMOUNT),
             coupon: parseFloat(item.COUPON_AMOUNT),
             shipping: parseFloat(item.SHIPPING_FEE_AMOUNT)
         }
-
-        //statementData.data = undefined;
 
         statements.push(statementData)
 

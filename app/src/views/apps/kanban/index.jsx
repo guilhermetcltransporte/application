@@ -8,77 +8,97 @@ import {
   Button,
   TextField,
   Tooltip,
+  Card,
+  Box,
+  CardContent,
+  CardActions,
 } from "@mui/material"
 import React, { useState, useEffect, useRef } from "react"
 import { updateInstallment } from "./index.controller"
 
-// InstallmentCard com loading visual
 const InstallmentCard = ({ installment, loading }) => {
   const isLate = installment.status === "overdue"
   const backgroundColor = isLate ? "#fdecea" : "white"
   const opacity = loading ? 0.5 : 1
 
   return (
-    <div
-      className="flex flex-col gap-y-1 items-start relative overflow-hidden"
-      style={{
-        padding: "8px",
-        backgroundColor,
-        borderRadius: 4,
-        opacity,
-        position: "relative",
-      }}
+    <Card
+      variant="outlined"
+      sx={{ backgroundColor, opacity, position: "relative" }}
     >
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(255,255,255,0.6)",
+            zIndex: 10,
+          }}
+        >
           <i className="ri-loader-4-line animate-spin text-xl text-gray-500"></i>
-        </div>
+        </Box>
       )}
 
-      <div className="flex items-center gap-2">
-        <i className="ri-file-list-2-line text-base" />
-        <Typography variant="body2" color="text.secondary" className="break-words is-full line-clamp-1">
-          <strong>#{installment.financialMovement?.documentNumber} - {installment.installment}</strong>
-        </Typography>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <i className="ri-user-line text-base" />
-        <Tooltip title={installment.financialMovement?.partner?.surname || ''}>
-          <Typography variant="body2" color="text.secondary" className="break-words is-full line-clamp-1">
-            <strong>{installment.financialMovement?.partner?.surname}</strong>
+      <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1, padding: 2, paddingBottom: '6px !important' }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <i className="ri-file-list-2-line text-base" />
+          <Typography variant="body2" noWrap>
+            <strong>
+              #{installment.financialMovement?.documentNumber} - {installment.installment}
+            </strong>
           </Typography>
-        </Tooltip>
-      </div>
+        </Box>
 
-      <div className="flex items-center gap-2">
-        <i className="ri-file-text-line text-base" />
-        <Tooltip title={installment.description || ''}>
-          <Typography variant="body2" color="text.secondary" className="break-words is-full line-clamp-1">
-            {installment.description}
-          </Typography>
-        </Tooltip>
-      </div>
+        <Box display="flex" alignItems="center" gap={1}>
+          <i className="ri-user-line text-base" />
+          <Tooltip title={installment.financialMovement?.partner?.surname || ""}>
+            <Typography variant="body2" noWrap>
+              <strong>{installment.financialMovement?.partner?.surname}</strong>
+            </Typography>
+          </Tooltip>
+        </Box>
 
-      <div className="flex justify-between items-center is-full">
-        <div className="flex items-center gap-1">
-          <i className="ri-money-dollar-circle-line text-base" />
-          <Typography variant="body2" color="text.secondary">
-            {new Intl.NumberFormat('pt-BR', {
-              style: 'currency',
-              currency: 'BRL'
-            }).format(installment.amount || 0)}
-          </Typography>
-        </div>
+        <Box display="flex" alignItems="center">
+          <i className="ri-file-text-line mr-1 text-base" style={{ flexShrink: 0 }} />
+          <Tooltip title={installment.description || ''}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              noWrap
+              sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {installment.description}
+            </Typography>
+          </Tooltip>
+        </Box>
 
-        <div className="flex items-center gap-1">
-          <i className="ri-calendar-line text-base" />
-          <Typography variant="body2" color="text.secondary">
-            {installment.dueDate ? new Date(installment.dueDate).toLocaleDateString('pt-BR') : '-'}
-          </Typography>
-        </div>
-      </div>
-    </div>
+        <Box sx={{ display: "flex", justifyContent: "space-between" }} gap={1}>
+
+          <Box display="flex" alignItems="center" gap={1}>
+            <i className="ri-money-dollar-circle-line text-base" />
+            <Typography variant="body2">
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(installment.amount || 0)}
+            </Typography>
+          </Box>
+
+          <Box display="flex" alignItems="center" gap={1}>
+            <i className="ri-calendar-line text-base" />
+            <Typography variant="body2">
+              {installment.dueDate
+                ? new Date(installment.dueDate).toLocaleDateString("pt-BR")
+                : "-"}
+            </Typography>
+          </Box>
+
+        </Box>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -359,6 +379,7 @@ const KanbanList = ({
 }
 
 const KanbanBoard = ({ initialBankAccounts, initialInstallments }) => {
+  
   const [installments, setInstallments] = useState(initialInstallments)
   const [bankAccounts, setBankAccounts] = useState(initialBankAccounts)
   const [loadingInstallmentIds, setLoadingInstallmentIds] = useState([])
@@ -369,8 +390,8 @@ const KanbanBoard = ({ initialBankAccounts, initialInstallments }) => {
     setLoadingInstallmentIds((prev) => prev.filter((id) => id !== installmentId))
 
   return (
-    <div className="flex items-start gap-6" style={{ height: "100%" }}>
-      <div className="flex gap-6" style={{ height: "100%" }}>
+    <div className="flex items-start" style={{ height: "100%" }}>
+      <div className="flex" style={{ height: "100%" }}>
         {bankAccounts.map((ba) => (
           <KanbanList
             key={ba.id === null ? "null" : ba.id}

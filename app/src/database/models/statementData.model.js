@@ -6,77 +6,62 @@ export class StatementData {
     field: 'id',
     primaryKey: true,
     autoIncrement: true,
-    type: DataTypes.UUID,
-  };
+    type: DataTypes.UUIDV4,
+  }
 
   statementId = {
     field: 'statementId',
-    type: DataTypes.UUID
-  };
+    type: DataTypes.UUIDV4
+  }
 
-  date = {
-    field: 'date',
-    type: DataTypes.DATE
-  };
+  entryDate = {
+    field: 'entryDate',
+    type: DataTypes.STRING
+  }
 
   description = {
     field: 'description',
     type: DataTypes.STRING(50),
-  };
+  }
 
   sourceId = {
     field: 'sourceId',
-    type: DataTypes.STRING,
-  };
+    type: DataTypes.STRING(20),
+  }
 
   orderId = {
     field: 'orderId',
-    type: DataTypes.STRING,
-  };
+    type: DataTypes.STRING(20),
+  }
   
-  gross = {
-    field: 'gross',
+  amount = {
+    field: 'amount',
     type: DataTypes.DECIMAL(18, 2)
-  };
-
-  coupon = {
-    field: 'coupon',
-    type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
   fee = {
     field: 'fee',
     type: DataTypes.DECIMAL(18, 2)
-  };
-
-  shipping = {
-    field: 'shipping',
-    type: DataTypes.DECIMAL(18, 2)
-  };
-
-  shippingCost = {
-    field: 'shippingCost',
-    type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
   debit = {
     field: 'debit',
     type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
   credit = {
     field: 'credit',
     type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
   balance = {
     field: 'balance',
     type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
-  data = {
-    field: 'data',
-    type: DataTypes.JSONB
-  };
+  extra = {
+    field: 'extra',
+    type: DataTypes.STRING(500)
+  }
 
 }

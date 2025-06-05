@@ -28,9 +28,13 @@ export const ViewAddStatement = ({ open, setOpen, onSubmit }) => {
   }, [open])
 
   const handleSubmit = async (values, { resetForm }) => {
-    await onSubmitChanges(values)
-    onSubmit()
-    setOpen(false)
+    try {
+      await onSubmitChanges(values)
+      onSubmit()
+      setOpen(false)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const validationSchema = yup.object({
@@ -112,7 +116,7 @@ export const ViewAddStatement = ({ open, setOpen, onSubmit }) => {
               <AutoComplete
                 label="Conta bancária"
                 value={values.bankAccount}
-                text={(item) => `${item.bank?.description} - ${item.agency} / ${item.number}`}
+                text={(item) => `${item.bank?.name} - ${item.agency} / ${item.number}`}
                 onSearch={getBankAccounts}
                 onChange={(bankAccount) => {
                   setIntegrationId(bankAccount?.companyIntegration?.integrationId || null)
@@ -125,12 +129,12 @@ export const ViewAddStatement = ({ open, setOpen, onSubmit }) => {
                     {item.bank?.icon && (
                       <img
                         src={item.bank.icon}
-                        alt={item.bank.description}
+                        alt={item.bank.name}
                         className="w-[30px] h-[30px] mt-1"
                       />
                     )}
                     <div className="flex flex-col text-sm">
-                      <span className="font-medium">{item.bank?.description}</span>
+                      <span className="font-medium">{item.bank?.name}</span>
                       <span>Agência: {item.agency} / Conta: {item.number}</span>
                     </div>
                   </div>
