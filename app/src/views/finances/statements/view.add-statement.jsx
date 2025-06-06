@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Box, Button, Drawer, IconButton, Typography, Divider,
   RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Radio
+  Radio,
+  CircularProgress
 } from '@mui/material'
 import { Formik, Form } from 'formik'
 import * as yup from 'yup'
@@ -103,7 +104,7 @@ export const ViewAddStatement = ({ open, setOpen, onSubmit }) => {
                 }}
               >
                 <FormControlLabel value="integration" control={<Radio />} label="Integração Bancária" />
-                <FormControlLabel value="ofx" control={<Radio />} label="Arquivo OFX" />
+                <FormControlLabel value="ofx" control={<Radio />} label="Arquivo OFX" disabled />
               </RadioGroup>
               {touched.uploadType && errors.uploadType && (
                 <Typography color="error" variant="caption">
@@ -239,8 +240,9 @@ export const ViewAddStatement = ({ open, setOpen, onSubmit }) => {
                   (values.uploadType === 'ofx' && !values.droppedFile) ||
                   (values.uploadType === 'integration' && !values.statement)
                 }
+                startIcon={isSubmitting && <CircularProgress size={16} color="inherit" />}
               >
-                Confirmar
+                {isSubmitting ? 'Confirmando...' : 'Confirmar'}
               </Button>
             </Box>
           </Form>

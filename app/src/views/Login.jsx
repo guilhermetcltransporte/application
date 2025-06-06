@@ -189,6 +189,7 @@ const Login = ({ mode }) => {
 
                     <Field
                       as={TextField}
+                      size='small'
                       name='email'
                       label='Usuário'
                       variant='filled'
@@ -206,6 +207,7 @@ const Login = ({ mode }) => {
 
                     <Field
                       as={TextField}
+                      size='small'
                       name='password'
                       label='Password'
                       variant='filled'
@@ -301,6 +303,7 @@ const Login = ({ mode }) => {
                         <FormControl fullWidth variant='filled'>
                           <InputLabel id='companyBusiness-label'>Empresa</InputLabel>
                           <Select
+                            size='small'
                             labelId='companyBusiness-label'
                             {...field}
                             error={meta.touched && Boolean(meta.error)}
@@ -321,6 +324,7 @@ const Login = ({ mode }) => {
                         <FormControl fullWidth variant='filled'>
                           <InputLabel id='company-label'>Filial</InputLabel>
                           <Select
+                            size='small'
                             labelId='company-label'
                             {...field}
                             error={meta.touched && Boolean(meta.error)}

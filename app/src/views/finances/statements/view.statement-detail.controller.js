@@ -25,3 +25,13 @@ export async function getStatement({statementId}) {
     return statement.get({ plain: true })
 
 }
+
+export async function saveStatementConciled(values) {
+
+    console.log(values)
+    
+    const db = new AppContext()
+
+    await db.StatementDataConciled.create({...values})
+
+}

@@ -6,32 +6,33 @@ export class StatementDataConciled {
     field: 'id',
     primaryKey: true,
     autoIncrement: true,
-    type: DataTypes.UUID,
-  };
-  
+    type: DataTypes.UUIDV4,
+  }
+
+  statementDataId = {
+    field: 'statementDataId',
+    type: DataTypes.UUIDV4
+  }
+
+  /*
   name = {
     field: 'name',
     type: DataTypes.STRING(100)
   };
 
-  statementDataId = {
-    field: 'statementDataId',
-    type: DataTypes.UUID
-  };
-  
   receivementId = {
     field: 'receivementId',
-    type: DataTypes.UUID
+    type: DataTypes.UUIDV4
   }
 
   paymentId = {
     field: 'paymentId',
-    type: DataTypes.UUID
+    type: DataTypes.UUIDV4
   }
   
   paymentCategorieId = {
     field: 'paymentCategorieId',
-    type: DataTypes.UUID
+    type: DataTypes.UUIDV4
   };
 
   action = {
@@ -46,12 +47,12 @@ export class StatementDataConciled {
 
   originId = {
     field: 'originId',
-    type: DataTypes.UUID
+    type: DataTypes.UUIDV4
   };
 
   destinationId = {
     field: 'destinationId',
-    type: DataTypes.UUID
+    type: DataTypes.UUIDV4
   };
 
   transferId = {
@@ -83,5 +84,6 @@ export class StatementDataConciled {
     field: 'message',
     type: DataTypes.STRING(150)
   };
+  */
 
 }

@@ -144,12 +144,13 @@ export const AutoComplete = (props) => {
     return (
         <AutocompleteContainer>
             <TextField
+                size={props.size ?? 'medium'}
                 inputRef={inputRef}
                 name="password"
                 label={label}
-                variant="filled"
+                variant={props.variant ?? 'filled'}
                 slotProps={{ inputLabel: { shrink: true } }}
-                placeholder={!value ? '' : text(value)}
+                placeholder={!value ? props.placeholder : text(value)}
                 value={query}
                 type={'text'}
                 fullWidth
@@ -158,10 +159,12 @@ export const AutoComplete = (props) => {
                 onBlur={handleBlur}
                 autoFocus={autoFocus}
                 sx={{
+                    ...(value && props.placeholder && {
                     '& input::placeholder': {
                         color: 'black',
-                        opacity: 1
-                    }
+                        opacity: 1,
+                    },
+                    }),
                 }}
                 InputProps={{
                     endAdornment: (

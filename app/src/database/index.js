@@ -16,6 +16,7 @@ import { FinancialMovement } from './models/financialMovement.model.js'
 import { FinancialMovementIntallment } from './models/financialMovementInstallment.model.js'
 import { Partner } from './models/partner.model.js'
 import { StatementData } from './models/statementData.model.js'
+import { StatementDataConciled } from './models/statementDataConciled.model.js'
 
 const afterFind = (result) => {
   const trimStrings = obj => {
@@ -58,6 +59,8 @@ export class AppContext extends Sequelize {
   Statement = this.define('statement', new Statement(), { tableName: 'statement' })
 
   StatementData = this.define('statementData', new StatementData(), { tableName: 'statementData' })
+
+  StatementDataConciled = this.define('statementDataConciled', new StatementDataConciled(), { tableName: 'statementDataConciled' })
 
   User = this.define('user', new User(), { tableName: 'aspnet_Users' })
 
