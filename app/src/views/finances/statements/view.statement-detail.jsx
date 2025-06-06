@@ -12,7 +12,6 @@ import {
   IconButton,
   Button,
   Collapse,
-  Backdrop,
   CircularProgress,
   Typography,
   DialogActions,
@@ -21,6 +20,7 @@ import {
   TextField,
   Paper,
   Grid,
+  Backdrop,
 } from '@mui/material'
 import { format } from 'date-fns-tz'
 import { Fragment, useEffect, useState } from 'react'
@@ -34,6 +34,7 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
   const [statement, setStatement] = useState(null)
   const [expandedRow, setExpandedRow] = useState(null)
   const [newConciledInput, setNewConciledInput] = useState({})
+  const [editingConciled, setEditingConciled] = useState({})
 
   useEffect(() => {
     const fetchStatement = async () => {
@@ -72,28 +73,26 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
     }))
   }
 
-  const handleConfirmConciled = (idx) => {
-    const tx = statement.statementData[idx]
-    const input = newConciledInput[idx]
-
-    if (!input?.amount) return
-
+  // Atualiza o statement no estado após salvar um registro novo ou editado
+  const updateStatementAfterSave = (idx, updatedConciled, editIndex = null) => {
     const updated = [...statement.statementData]
-    updated[idx].concileds.push({
-      id: `c${tx.concileds.length + 1}`,
-      description: input.description,
-      amount: parseFloat(input.amount),
-    })
-
+    if (editIndex !== null) {
+      updated[idx].concileds[editIndex] = updatedConciled
+    } else {
+      updated[idx].concileds.push(updatedConciled)
+    }
     setStatement({ ...statement, statementData: updated })
-    setNewConciledInput((prev) => {
+  }
+
+  const handleCancelConciledEdit = (idx) => {
+    setEditingConciled((prev) => {
       const copy = { ...prev }
       delete copy[idx]
       return copy
     })
   }
 
-  const handleCancelConciled = (idx) => {
+  const handleCancelConciledAdd = (idx) => {
     setNewConciledInput((prev) => {
       const copy = { ...prev }
       delete copy[idx]
@@ -103,10 +102,14 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
 
   return (
     <>
-      <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff', flexDirection: 'column' }}>
-        <CircularProgress color="inherit" />
-        <Typography variant="h6" sx={{ mt: 2, color: '#fff' }}>Carregando...</Typography>
-      </Backdrop>
+      {loading && (
+        <Backdrop open={true} sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff' }}>
+          <CircularProgress color="inherit" />
+          <Typography variant="h6" sx={{ mt: 2, color: '#fff' }}>
+            Carregando...
+          </Typography>
+        </Backdrop>
+      )}
 
       <Dialog
         open={statementId !== undefined && !loading}
@@ -148,11 +151,11 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                     <TableCell>{data.sourceId}</TableCell>
                     <TableCell>{format(data.entryDate, 'dd/MM/yyyy HH:mm')}</TableCell>
                     <TableCell>{data.orderId ? `Ref. pedido #${data.orderId}` : ''}</TableCell>
-                    <TableCell>{data.amount.toFixed(2)}</TableCell>
-                    <TableCell>{data.fee.toFixed(2)}</TableCell>
-                    <TableCell>{data.credit.toFixed(2)}</TableCell>
-                    <TableCell>{data.debit.toFixed(2)}</TableCell>
-                    <TableCell>{data.balance.toFixed(2)}</TableCell>
+                    <TableCell>{data.amount?.toFixed(2)}</TableCell>
+                    <TableCell>{data.fee?.toFixed(2)}</TableCell>
+                    <TableCell>{data.credit?.toFixed(2)}</TableCell>
+                    <TableCell>{data.debit?.toFixed(2)}</TableCell>
+                    <TableCell>{data.balance?.toFixed(2)}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => toggleExpand(index)}>
                         {expandedRow === index ? (
@@ -169,10 +172,33 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                       index={index}
                       data={data}
                       input={newConciledInput[index]}
+                      editing={editingConciled[index]}
                       onAdd={handleAddConciled}
                       onChange={handleInputChange}
-                      onConfirm={handleConfirmConciled}
-                      onCancel={handleCancelConciled}
+                      onConfirm={async (input, editIndex = null) => {
+                        try {
+                          const saved = await saveStatementConciled(data.id, input)
+                          updateStatementAfterSave(index, saved, editIndex)
+                          if (editIndex !== null) {
+                            handleCancelConciledEdit(index)
+                          } else {
+                            handleCancelConciledAdd(index)
+                          }
+                        } catch (error) {
+                          toast.error(error.message)
+                        }
+                      }}
+                      onCancelAdd={handleCancelConciledAdd}
+                      onCancelEdit={handleCancelConciledEdit}
+                      onStartEdit={(editIndex, item) =>
+                        setEditingConciled((prev) => ({
+                          ...prev,
+                          [index]: {
+                            editIndex,
+                            values: { ...item },
+                          },
+                        }))
+                      }
                     />
                   )}
                 </Fragment>
@@ -181,31 +207,70 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
           </Table>
         </DialogContent>
         <DialogActions>
-          <Button variant="text" color="primary" sx={{ mt: 4 }} onClick={onClose}>Desconciliar</Button>
-          <Button variant="contained" color="success" sx={{ mt: 4 }} onClick={onClose}>Conciliar</Button>
+          <Button variant="text" color="primary" sx={{ mt: 4 }} onClick={onClose}>
+            Desconciliar
+          </Button>
+          <Button variant="contained" color="success" sx={{ mt: 4 }} onClick={onClose}>
+            Conciliar
+          </Button>
         </DialogActions>
       </Dialog>
     </>
   )
 }
 
-function ExpandedRow({ index, data, input, onAdd, onChange, onConfirm, onCancel }) {
+function ExpandedRow({
+  index,
+  data,
+  input,
+  editing,
+  onAdd,
+  onChange,
+  onConfirm,
+  onCancelAdd,
+  onCancelEdit,
+  onStartEdit,
+}) {
   return (
     <TableRow>
       <TableCell colSpan={9} sx={{ p: 0 }}>
         <Collapse in={true}>
           <Table size="small" sx={{ mb: 1 }}>
             <TableBody>
-              {(data.concileds || []).map((item, i) => (
-                <TableRow key={i}>
-                  <TableCell style={{ width: '120px' }}>{item.id}</TableCell>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.amount.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
+              {(data.concileds || []).map((item, i) =>
+                editing?.editIndex === i ? (
+                  <ConciliationForm
+                    key={`edit-${i}`}
+                    statementDataId={data.id}
+                    index={index}
+                    input={editing.values}
+                    onChange={(idx, field, value) => onChange(idx, field, value)}
+                    onConfirm={() => onConfirm(editing.values, i)}
+                    onCancel={() => onCancelEdit(index)}
+                  />
+                ) : (
+                  <TableRow key={i}>
+                    <TableCell style={{ width: '120px' }}>{item.id}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell>{item.amount?.toFixed(2)}</TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" onClick={() => onStartEdit(i, item)}>
+                        <i className="ri-pencil-line" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                )
+              )}
 
               {input ? (
-                <ConciliationForm index={index} input={input} onChange={onChange} onConfirm={onConfirm} onCancel={onCancel} />
+                <ConciliationForm
+                  statementDataId={data.id}
+                  index={index}
+                  input={input}
+                  onChange={onChange}
+                  onConfirm={() => onConfirm(input)}
+                  onCancel={() => onCancelAdd(index)}
+                />
               ) : (
                 <TableRow>
                   <TableCell colSpan={9}>
@@ -228,14 +293,28 @@ function ExpandedRow({ index, data, input, onAdd, onChange, onConfirm, onCancel 
   )
 }
 
-function ConciliationForm({ index, input, onChange, onConfirm, onCancel }) {
+function ConciliationForm({ statementDataId, index, input, onChange, onConfirm, onCancel }) {
+  const [localInput, setLocalInput] = useState(input || {})
+  const [localLoading, setLocalLoading] = useState(false)
 
-  const handleConfirm = async (index) => {
+  // Sincroniza se input mudar (editar registro diferente)
+  useEffect(() => {
+    setLocalInput(input || {})
+  }, [input])
 
-    console.log(input)
+  const handleChange = (field, value) => {
+    const updated = { ...localInput, [field]: value }
+    setLocalInput(updated)
+    onChange(index, field, value)
+  }
 
-    await saveStatementConciled(input)
-
+  const handleConfirm = async () => {
+    setLocalLoading(true)
+    try {
+      await onConfirm()
+    } finally {
+      setLocalLoading(false)
+    }
   }
 
   return (
@@ -247,8 +326,8 @@ function ConciliationForm({ index, input, onChange, onConfirm, onCancel }) {
               <Select
                 fullWidth
                 size="small"
-                value={input.type}
-                onChange={(e) => onChange(index, 'type', e.target.value)}
+                value={localInput.type || ''}
+                onChange={(e) => handleChange('type', e.target.value)}
                 displayEmpty
               >
                 <MenuItem value="">[Selecione]</MenuItem>
@@ -258,34 +337,70 @@ function ConciliationForm({ index, input, onChange, onConfirm, onCancel }) {
               </Select>
             </Grid>
 
-            {input.type !== '' && (
+            {localInput.type !== '' && (
               <>
                 <Grid item xs={12} sm={2.8}>
-                  <AutoComplete size="small" variant="outlined" placeholder="Cliente" value={input.partner} text={(partner) => partner.userName} onChange={(partner) => onChange(index, 'partner', partner)} onSearch={getUser}>
+                  <AutoComplete
+                    size="small"
+                    variant="outlined"
+                    placeholder="Cliente"
+                    value={localInput.partner}
+                    text={(partner) => partner.userName}
+                    onChange={(partner) => handleChange('partner', partner)}
+                    onSearch={getUser}
+                  >
                     {(item) => <span>{item.userName}</span>}
                   </AutoComplete>
-                  <AutoComplete size="small" variant="outlined" placeholder="Categoria" value={input.partner} text={(partner) => partner.userName} onChange={(partner) => onChange(index, 'partner', partner)} onSearch={getUser}>
-                    {(item) => <span>{item.userName}</span>}
+
+                  <AutoComplete
+                    size="small"
+                    variant="outlined"
+                    placeholder="Categoria"
+                    value={localInput.category}
+                    text={(cat) => cat.name}
+                    onChange={(cat) => handleChange('category', cat)}
+                    onSearch={getUser}
+                  >
+                    {(item) => <span>{item.name}</span>}
                   </AutoComplete>
                 </Grid>
 
                 <Grid item xs={12} sm={1.31}>
-                  <TextField fullWidth size="small" placeholder="Valor" value={input.amount} onChange={(e) => onChange(index, 'amount', e.target.value)} />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Valor"
+                    value={localInput.amount || ''}
+                    onChange={(e) => handleChange('amount', e.target.value)}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={1.31}>
-                  <TextField fullWidth size="small" placeholder="Taxa" value={input.fee} onChange={(e) => onChange(index, 'fee', e.target.value)} />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Taxa"
+                    value={localInput.fee || ''}
+                    onChange={(e) => handleChange('fee', e.target.value)}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={1.31}>
-                  <TextField fullWidth size="small" type="number" placeholder="Desconto" value={input.discount} onChange={(e) => onChange(index, 'discount', e.target.value)} />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    placeholder="Desconto"
+                    value={localInput.discount || ''}
+                    onChange={(e) => handleChange('discount', e.target.value)}
+                  />
                 </Grid>
               </>
             )}
 
             <Grid item xs={12} sm={1}>
-              <IconButton color="success" size="small" onClick={() => handleConfirm(index)}>
-                <i className="ri-check-line" />
+              <IconButton color="success" size="small" onClick={handleConfirm} disabled={localLoading}>
+                {localLoading ? <CircularProgress size={18} /> : <i className="ri-check-line" />}
               </IconButton>
-              <IconButton color="error" size="small" onClick={() => onCancel(index)}>
+              <IconButton color="error" size="small" onClick={onCancel} disabled={localLoading}>
                 <i className="ri-close-line" />
               </IconButton>
             </Grid>

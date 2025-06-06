@@ -14,7 +14,9 @@ export async function getStatement({statementId}) {
 
     const statement = await db.Statement.findOne({
         include: [
-            { model: db.StatementData, as: 'statementData' }
+            { model: db.StatementData, as: 'statementData', include: [
+                { model: db.StatementDataConciled, as: 'concileds' }
+            ]}
         ],
         where: [
             {id: statementId}
@@ -26,12 +28,26 @@ export async function getStatement({statementId}) {
 
 }
 
-export async function saveStatementConciled(values) {
+export async function saveStatementConciled(statementDataId, values) {
+  const db = new AppContext();
 
-    console.log(values)
-    
-    const db = new AppContext()
+  const payload = {
+    statementDataId,
+    type: values.type,
+    description: values.description || '',
+    amount: Number(values.amount) || 0,
+    fee: Number(values.fee) || 0,
+    discount: Number(values.discount) || 0,
+    partnerId: values.partner?.id || null,
+  };
 
-    await db.StatementDataConciled.create({...values})
-
+  if (values.id) {
+    // Edição
+    await db.StatementDataConciled.update(payload, { where: { id: values.id } });
+    return { ...payload, id: values.id };
+  } else {
+    // Criação
+    const result = await db.StatementDataConciled.create(payload);
+    return result.toJSON();
+  }
 }

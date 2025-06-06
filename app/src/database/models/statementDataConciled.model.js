@@ -59,12 +59,13 @@ export class StatementDataConciled {
     field: 'transferId',
     type: DataTypes.STRING(6)
   };
-
+*/
   amount = {
     field: 'amount',
     type: DataTypes.DECIMAL(18, 2)
-  };
-
+  }
+  
+/*
   fee = {
     field: 'fee',
     type: DataTypes.DECIMAL(18, 2)

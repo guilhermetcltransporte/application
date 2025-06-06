@@ -109,6 +109,8 @@ export class AppContext extends Sequelize {
     this.Statement.belongsTo(this.BankAccount, { as: 'bankAccount', foreignKey: 'bankAccountId', targetKey: 'codigo_conta_bancaria' })
     this.Statement.hasMany(this.StatementData, { as: 'statementData', foreignKey: 'statementId' })
 
+    this.StatementData.hasMany(this.StatementDataConciled, { as: 'concileds', foreignKey: 'statementDataId' })
+
 
     this.User.hasMany(this.CompanyUser, { as: 'companyUsers', foreignKey: 'userId' })
     this.User.belongsTo(this.UserMember, { as: 'userMember', foreignKey: 'userId', targetKey: 'userId' })
