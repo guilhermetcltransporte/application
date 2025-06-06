@@ -257,12 +257,16 @@ function ExpandedRow({
                       <IconButton size="small" onClick={() => onStartEdit(i, item)}>
                         <i className="ri-pencil-line" />
                       </IconButton>
+                      <IconButton size="small" onClick={() => onStartEdit(i, item)}>
+                        <i className="ri-trash" />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 )
               )}
 
-              {input ? (
+              {/* Formulário de adição, exibido apenas se não estiver editando */}
+              {!editing && input ? (
                 <ConciliationForm
                   statementDataId={data.id}
                   index={index}
@@ -271,7 +275,10 @@ function ExpandedRow({
                   onConfirm={() => onConfirm(input)}
                   onCancel={() => onCancelAdd(index)}
                 />
-              ) : (
+              ) : null}
+
+              {/* Botão de adicionar, exibido apenas se não estiver editando nem adicionando */}
+              {!editing && !input && (
                 <TableRow>
                   <TableCell colSpan={9}>
                     <Button
@@ -292,6 +299,7 @@ function ExpandedRow({
     </TableRow>
   )
 }
+
 
 function ConciliationForm({ statementDataId, index, input, onChange, onConfirm, onCancel }) {
   const [localInput, setLocalInput] = useState(input || {})
