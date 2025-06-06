@@ -14,7 +14,9 @@ export async function getUser (search) {
 
     const where = []
 
-    where.push({'$companyUsers.company.codigo_empresa$': session.company.companyBusinessId})
+    console.log(session.company)
+
+    where.push({'$companyUsers.company.codigo_empresa$': session.company.companyBusiness.codigo_empresa})
 
     where.push({'$userName$': {[Sequelize.Op.like]: `%${search.replace(' ', "%").toUpperCase()}%`}})
 
@@ -33,7 +35,7 @@ export async function getUser (search) {
                 required: true,
                 attributes: ['codigo_empresa', 'companyBusinessId'],
                 where: {
-                    codigo_empresa: session.company.companyBusinessId
+                    codigo_empresa: session.company.codigo_empresa_filial
                 }
                 }
             ]

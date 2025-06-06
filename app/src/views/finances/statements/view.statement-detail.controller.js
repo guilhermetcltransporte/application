@@ -19,6 +19,7 @@ export async function getStatement({statementId}) {
         where: [
             {id: statementId}
         ],
+        order: [[{ model: db.StatementData, as: 'statementData' }, 'entryDate', 'ASC']],
     })
 
     return statement.get({ plain: true })
