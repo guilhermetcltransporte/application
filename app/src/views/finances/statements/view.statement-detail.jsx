@@ -67,10 +67,22 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
   }
 
   const handleInputChange = (idx, field, value) => {
-    setNewConciledInput((prev) => ({
-      ...prev,
-      [idx]: { ...prev[idx], [field]: value },
-    }))
+    if (editingConciled[idx]) {
+      // Atualiza os valores do registro que está sendo editado
+      setEditingConciled((prev) => ({
+        ...prev,
+        [idx]: {
+          ...prev[idx],
+          values: { ...prev[idx].values, [field]: value },
+        },
+      }))
+    } else {
+      // Atualiza o novo registro que está sendo adicionado
+      setNewConciledInput((prev) => ({
+        ...prev,
+        [idx]: { ...prev[idx], [field]: value },
+      }))
+    }
   }
 
   // Atualiza o statement no estado após salvar um registro novo ou editado
@@ -244,7 +256,7 @@ function ExpandedRow({
                     statementDataId={data.id}
                     index={index}
                     input={editing.values}
-                    onChange={(idx, field, value) => onChange(idx, field, value)}
+                    onChange={onChange}
                     onConfirm={() => onConfirm(editing.values, i)}
                     onCancel={() => onCancelEdit(index)}
                   />
@@ -257,40 +269,39 @@ function ExpandedRow({
                       <IconButton size="small" onClick={() => onStartEdit(i, item)}>
                         <i className="ri-pencil-line" />
                       </IconButton>
-                      <IconButton size="small" onClick={() => onStartEdit(i, item)}>
-                        <i className="ri-trash" />
+                      <IconButton size="small" onClick={() => alert('Implementar exclusão')}>
+                        <i className="ri-delete-bin-line" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
                 )
               )}
 
-              {/* Formulário de adição, exibido apenas se não estiver editando */}
-              {!editing && input ? (
-                <ConciliationForm
-                  statementDataId={data.id}
-                  index={index}
-                  input={input}
-                  onChange={onChange}
-                  onConfirm={() => onConfirm(input)}
-                  onCancel={() => onCancelAdd(index)}
-                />
-              ) : null}
-
-              {/* Botão de adicionar, exibido apenas se não estiver editando nem adicionando */}
-              {!editing && !input && (
-                <TableRow>
-                  <TableCell colSpan={9}>
-                    <Button
-                      size="small"
-                      variant="text"
-                      startIcon={<i className="ri-add-circle-line" />}
-                      onClick={() => onAdd(index)}
-                    >
-                      Adicionar
-                    </Button>
-                  </TableCell>
-                </TableRow>
+              {/* MOSTRA O FORMULÁRIO DE ADICIONAR APENAS SE NÃO ESTIVER EDITANDO */}
+              {!editing && (
+                input ? (
+                  <ConciliationForm
+                    statementDataId={data.id}
+                    index={index}
+                    input={input}
+                    onChange={onChange}
+                    onConfirm={() => onConfirm(input)}
+                    onCancel={() => onCancelAdd(index)}
+                  />
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<i className="ri-add-circle-line" />}
+                        onClick={() => onAdd(index)}
+                      >
+                        Adicionar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
               )}
             </TableBody>
           </Table>
@@ -300,12 +311,10 @@ function ExpandedRow({
   )
 }
 
-
 function ConciliationForm({ statementDataId, index, input, onChange, onConfirm, onCancel }) {
   const [localInput, setLocalInput] = useState(input || {})
   const [localLoading, setLocalLoading] = useState(false)
 
-  // Sincroniza se input mudar (editar registro diferente)
   useEffect(() => {
     setLocalInput(input || {})
   }, [input])
