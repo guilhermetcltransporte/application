@@ -1,3 +1,4 @@
+// view.statement-detail.jsx
 'use client'
 
 import {
@@ -13,6 +14,7 @@ import { deleteStatementConciled, getStatement, saveStatementConciled } from './
 import { toast } from 'react-toastify'
 import { AutoComplete } from '@/components/AutoComplete'
 import { getFinancialCategory, getPartner, getUser } from '@/utils/search'
+import { ItemDetailDrawer } from './ItemDetailDrawer' // Import o novo componente
 
 const entryTypeAlias = {
   '': {
@@ -70,6 +72,10 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
   const [expandedRow, setExpandedRow] = useState(null)
   const [newConciledInput, setNewConciledInput] = useState({})
   const [editingConciled, setEditingConciled] = useState({})
+
+  // State para o novo drawer
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [selectedItemId, setSelectedItemId] = useState(null)
 
   useEffect(() => {
     const fetchStatement = async () => {
@@ -167,6 +173,17 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
       statementData: filteredData,
     }))
     setShowFilterDialog(false)
+  }
+
+  // Nova função para abrir o drawer
+  const handleOpenDrawer = (id) => {
+    setSelectedItemId(id)
+    setIsDrawerOpen(true)
+  }
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false)
+    setSelectedItemId(null)
   }
 
   return (
@@ -284,6 +301,7 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                           toast.error(error.message)
                         }
                       }}
+                      onViewDetails={handleOpenDrawer} // Passa o novo handler
                     />
                   )}
                 </Fragment>
@@ -329,7 +347,7 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                       )
                     }}
                   />
-                  &nbsp;{(entryTypeAlias[type] ? `${entryTypeAlias[type]?.content || ''} - ${entryTypeAlias[type].title}` : type)}
+                  &nbsp;{entryTypeAlias[type] ? `${entryTypeAlias[type]?.content || ''} - ${entryTypeAlias[type].title}` : type}
                 </label>
               </div>
             )
@@ -341,12 +359,25 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
         </DialogActions>
       </Dialog>
 
-
+      {/* Item Detail Drawer */}
+      <ItemDetailDrawer
+        open={isDrawerOpen}
+        onClose={handleCloseDrawer}
+        itemId={selectedItemId}
+        // Use ModalProps para garantir que o z-index seja aplicado corretamente
+        container={document.body}
+        ModalProps={{
+          sx: {
+            zIndex: 99999, // <<< Aumentado drasticamente para depuração
+          },
+        }}
+      />
     </>
   )
 }
 
-function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, onCancelAdd, onCancelEdit, onStartEdit, onDelete }) {
+// O restante do seu arquivo (ExpandedRow, ConciliationForm) permanece igual...
+function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, onCancelAdd, onCancelEdit, onStartEdit, onDelete, onViewDetails }) {
   return (
     <TableRow>
       <TableCell colSpan={9} sx={{ p: 0 }}>
@@ -377,7 +408,7 @@ function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, 
                 ) : (
                   <TableRow key={i}>
                     <TableCell>{typeDescription(item.type)}</TableCell>
-                    <TableCell>{item.partner.surname}<br></br>{item.category.description}</TableCell>
+                    <TableCell>{item.partner?.surname}<br></br>{item.category?.description}</TableCell>
                     <TableCell align="right">{formatCurrency(item.amount)}</TableCell>
                     <TableCell align="right">{formatCurrency(item.fee)}</TableCell>
                     <TableCell align="right">{formatCurrency(item.discount)}</TableCell>
@@ -388,7 +419,7 @@ function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, 
                       <IconButton onClick={() => onDelete(item)}>
                         <i className="ri-delete-bin-line" />
                       </IconButton>
-                      <IconButton onClick={() => onVincule(item)}>
+                      <IconButton onClick={() => onViewDetails(item.id)}> {/* Passa item.id aqui */}
                         <i className="ri-search-line" />
                       </IconButton>
                     </TableCell>
