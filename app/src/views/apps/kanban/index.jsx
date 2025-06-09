@@ -16,6 +16,7 @@ import {
 import React, { useState, useEffect, useRef } from "react"
 import { updateInstallment } from "./index.controller"
 
+// Componente InstallmentCard (inalterado em sua estrutura visual)
 const InstallmentCard = ({ installment, loading }) => {
   const isLate = installment.status === "overdue"
   const backgroundColor = isLate ? "#fdecea" : "white"
@@ -102,6 +103,7 @@ const InstallmentCard = ({ installment, loading }) => {
   )
 }
 
+// Componente NewInstallment (inalterado)
 const NewInstallment = ({ addInstallment }) => {
   const [editing, setEditing] = useState(false)
   const [input, setInput] = useState("")
@@ -165,6 +167,7 @@ const NewInstallment = ({ addInstallment }) => {
   )
 }
 
+// Componente ColumnHeader (inalterado)
 const ColumnHeader = ({ bankAccount, onGenerateRemessa, onExportCsv }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
@@ -212,6 +215,7 @@ const ColumnHeader = ({ bankAccount, onGenerateRemessa, onExportCsv }) => {
   )
 }
 
+// Componente KanbanList (com drag and drop nativo)
 const KanbanList = ({
   bankAccount,
   installments,
@@ -223,70 +227,13 @@ const KanbanList = ({
   removeLoadingInstallment
 }) => {
   const [installmentsList, setInstallmentsList] = useState([])
-  const dragData = useRef({ draggedInstallment: null, originBankAccountId: null, dragGhost: null })
+  // Novo estado para feedback visual quando arrastando sobre a coluna
+  const [isDraggingOver, setIsDraggingOver] = useState(false) 
 
   useEffect(() => {
     const installmentIds = bankAccounts.find((col) => col.id === bankAccount.id)?.taskIds || []
     setInstallmentsList(installments.filter((installment) => installment && installmentIds.includes(installment.id)))
   }, [bankAccounts, installments, bankAccount.id])
-
-  const createDragGhost = (target, clientX, clientY) => {
-    const ghost = target.cloneNode(true)
-    ghost.style.position = "fixed"
-    ghost.style.pointerEvents = "none"
-    ghost.style.opacity = "0.8"
-    ghost.style.zIndex = "1000"
-    ghost.style.width = `${target.offsetWidth}px`
-    ghost.style.top = `${clientY}px`
-    ghost.style.left = `${clientX}px`
-    ghost.style.backgroundColor = "white"
-    ghost.style.borderRadius = "4px"
-    document.body.appendChild(ghost)
-    return ghost
-  }
-
-  const handleMouseDown = (e, installment) => {
-    e.preventDefault()
-    dragData.current = {
-      draggedInstallment: installment,
-      originBankAccountId: bankAccount?.id,
-      dragGhost: createDragGhost(e.currentTarget, e.clientX, e.clientY),
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("mouseup", handleMouseUp)
-    document.body.style.userSelect = "none"
-  }
-
-  const handleMouseMove = (e) => {
-    const ghost = dragData.current.dragGhost
-    if (ghost) {
-      ghost.style.top = `${e.clientY + 8}px`
-      ghost.style.left = `${e.clientX + 8}px`
-    }
-  }
-
-  const detectDropPosition = (e) => {
-    const bankAccountElements = document.querySelectorAll("[data-bank-account-id]")
-    for (const baEl of bankAccountElements) {
-      const rect = baEl.getBoundingClientRect()
-      if (
-        e.clientX >= rect.left && e.clientX <= rect.right &&
-        e.clientY >= rect.top && e.clientY <= rect.bottom
-      ) {
-        let bankAccountId = baEl.getAttribute("data-bank-account-id")
-        bankAccountId = bankAccountId === "null" ? null : Number(bankAccountId)
-        const children = Array.from(baEl.querySelectorAll(".task-wrapper"))
-        for (let i = 0; i < children.length; i++) {
-          const childRect = children[i].getBoundingClientRect()
-          if (e.clientY < childRect.top + childRect.height / 2) {
-            return { bankAccountId, index: i }
-          }
-        }
-        return { bankAccountId, index: children.length }
-      }
-    }
-    return null
-  }
 
   const removeInstallmentFromBankAccount = (bankAccounts, bankAccountId, installmentId) => bankAccounts.map((ba) =>
     ba.id === bankAccountId
@@ -300,47 +247,95 @@ const KanbanList = ({
       : ba
   )
 
-  const handleMouseUp = async (e) => {
-    const { draggedInstallment, originBankAccountId, dragGhost } = dragData.current
-    if (dragGhost) document.body.removeChild(dragGhost)
-    window.removeEventListener("mousemove", handleMouseMove)
-    window.removeEventListener("mouseup", handleMouseUp)
-    document.body.style.userSelect = ""
+  // Evento onDragStart para o item arrastável
+  const handleDragStart = (e, installment) => {
+    // Armazena os dados da parcela e a coluna de origem
+    e.dataTransfer.setData("text/plain", JSON.stringify({
+      installmentId: installment.id,
+      originBankAccountId: bankAccount.id,
+      fromIndex: installmentsList.findIndex(item => item.id === installment.id) // Posição inicial na lista
+    }));
+    e.dataTransfer.effectAllowed = "move"; // Indica que é uma operação de mover
+    e.currentTarget.classList.add("dragging"); // Adiciona uma classe para styling enquanto arrasta
+  };
 
-    if (!draggedInstallment) return
+  // Evento onDragEnd para o item arrastável
+  const handleDragEnd = (e) => {
+    e.currentTarget.classList.remove("dragging"); // Remove a classe de styling
+  };
 
-    const dropPos = detectDropPosition(e)
-    if (!dropPos) return
+  // Evento onDragOver para a lista (coluna) - impede o comportamento padrão e permite o drop
+  const handleDragOver = (e) => {
+    e.preventDefault(); 
+    e.dataTransfer.dropEffect = "move"; // Define o efeito visual do cursor
+  };
 
-    const { bankAccountId: destBankAccountId, index: destIndex } = dropPos
+  // Evento onDragEnter para a lista (coluna) - para feedback visual
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDraggingOver(true); // Define o estado para mostrar feedback visual
+  };
 
-    const originBA = bankAccounts.find((c) => c.id === originBankAccountId)
-    const fromIndex = originBA.taskIds.indexOf(draggedInstallment.id)
+  // Evento onDragLeave para a lista (coluna) - remove feedback visual
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDraggingOver(false); // Reseta o estado
+  };
 
-    if (destBankAccountId === originBankAccountId && (fromIndex === destIndex || fromIndex + 1 === destIndex)) {
-      return
+  // Evento onDrop para a lista (coluna) - processa a soltura
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDraggingOver(false); // Reseta o estado de feedback visual
+
+    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+    const { installmentId, originBankAccountId, fromIndex } = data;
+
+    const draggedInstallment = installments.find(inst => inst.id === installmentId);
+    if (!draggedInstallment) return;
+
+    // Determinar a posição de soltura dentro da lista, para permitir reordenação
+    let destIndex = installmentsList.length; // Por padrão, adiciona no final
+    const children = Array.from(e.currentTarget.querySelectorAll(".task-wrapper"));
+
+    for (let i = 0; i < children.length; i++) {
+      const childRect = children[i].getBoundingClientRect();
+      // Se o mouse estiver acima da metade de um item, insere antes dele
+      if (e.clientY < childRect.top + childRect.height / 2) {
+        destIndex = i;
+        break;
+      }
     }
 
-    // Atualiza o estado visual para novo local
-    let updatedBankAccounts = removeInstallmentFromBankAccount(bankAccounts, originBankAccountId, draggedInstallment.id)
-    updatedBankAccounts = insertInstallmentInBankAccount(updatedBankAccounts, destBankAccountId, draggedInstallment.id, destIndex)
-    setBankAccounts(updatedBankAccounts)
+    const destBankAccountId = bankAccount.id;
 
-    addLoadingInstallment(draggedInstallment.id)
+    // Evita arrastar para a mesma posição na mesma coluna
+    if (destBankAccountId === originBankAccountId && (fromIndex === destIndex || fromIndex + 1 === destIndex)) {
+      return;
+    }
+
+    // Atualiza o estado visualmente (otimista)
+    let updatedBankAccounts = removeInstallmentFromBankAccount(bankAccounts, originBankAccountId, draggedInstallment.id);
+    updatedBankAccounts = insertInstallmentInBankAccount(updatedBankAccounts, destBankAccountId, draggedInstallment.id, destIndex);
+    setBankAccounts(updatedBankAccounts);
+
+    addLoadingInstallment(draggedInstallment.id); // Adiciona a parcela à lista de carregamento
 
     try {
-      await updateInstallment({id: draggedInstallment.id, bankAccountId: destBankAccountId})
+      // Chama a API para atualizar o banco de dados
+      await updateInstallment({ id: draggedInstallment.id, bankAccountId: destBankAccountId });
     } catch (error) {
+      // Em caso de erro, reverte o estado visual
       setBankAccounts((prev) => {
-        let reverted = removeInstallmentFromBankAccount(prev, destBankAccountId, draggedInstallment.id)
-        reverted = insertInstallmentInBankAccount(reverted, originBankAccountId, draggedInstallment.id, fromIndex)
-        return reverted
-      })
-      alert(`Erro ao mover tarefa #${draggedInstallment.id}, operação revertida.`)
+        let reverted = removeInstallmentFromBankAccount(prev, destBankAccountId, draggedInstallment.id);
+        reverted = insertInstallmentInBankAccount(reverted, originBankAccountId, draggedInstallment.id, fromIndex);
+        return reverted;
+      });
+      alert(`Erro ao mover tarefa #${draggedInstallment.id}, operação revertida.`);
     } finally {
-      removeLoadingInstallment(draggedInstallment.id)
+      removeLoadingInstallment(draggedInstallment.id); // Remove a parcela da lista de carregamento
     }
-  }
+  };
+
 
   const addNewInstallment = (title) => {
     const maxId = installments.length > 0 ? Math.max(...installments.map(t => t.id || 0)) : 0
@@ -358,7 +353,23 @@ const KanbanList = ({
   return (
     <div
       data-bank-account-id={bankAccount.id === null ? "null" : bankAccount.id}
-      style={{ width: "320px", padding: "0.5rem", backgroundColor: "#f4f5f7", borderRadius: 4, marginRight: 8, display: "flex", flexDirection: "column", height: "100%" }}
+      // Eventos de drop para a coluna
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      style={{
+        width: "320px",
+        padding: "0.5rem",
+        backgroundColor: "#f4f5f7", // Cor de fundo original
+        borderRadius: 4,
+        marginRight: 8,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        // Adiciona feedback visual para quando um item está sobre a coluna
+        border: isDraggingOver ? "2px dashed #007bff" : "2px solid transparent"
+      }}
     >
       <ColumnHeader bankAccount={bankAccount} />
       <div style={{ flexGrow: 1, overflowY: "auto" }} className="scroll-smooth">
@@ -366,9 +377,12 @@ const KanbanList = ({
           <div
             key={installment.id}
             className="task-wrapper"
-            onMouseDown={(e) => handleMouseDown(e, installment)}
+            draggable="true" // Torna o item arrastável
+            onDragStart={(e) => handleDragStart(e, installment)}
+            onDragEnd={handleDragEnd}
             style={{ cursor: "grab", userSelect: "none", marginBottom: 8 }}
           >
+            {/* O InstallmentCard é renderizado aqui, sem alterações */}
             <InstallmentCard installment={installment} loading={loadingInstallmentIds.includes(installment.id)} />
           </div>
         ))}
@@ -378,8 +392,9 @@ const KanbanList = ({
   )
 }
 
+// Componente KanbanBoard (inalterado)
 const KanbanBoard = ({ initialBankAccounts, initialInstallments }) => {
-  
+
   const [installments, setInstallments] = useState(initialInstallments)
   const [bankAccounts, setBankAccounts] = useState(initialBankAccounts)
   const [loadingInstallmentIds, setLoadingInstallmentIds] = useState([])
