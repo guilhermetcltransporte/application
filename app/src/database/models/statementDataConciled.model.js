@@ -19,17 +19,15 @@ export class StatementDataConciled {
     type: DataTypes.BIGINT
   }
 
-/*
   receivementId = {
     field: 'receivementId',
-    type: DataTypes.UUIDV4
+    type: DataTypes.BIGINT
   }
 
   paymentId = {
     field: 'paymentId',
-    type: DataTypes.UUIDV4
+    type: DataTypes.BIGINT
   }
-*/
 
   categoryId = {
     field: 'categoryId',

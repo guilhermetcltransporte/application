@@ -1,14 +1,45 @@
+'use client'
+
 import {
   Dialog, DialogTitle, DialogContent, Table, TableHead, TableRow, TableCell,
   TableBody, IconButton, Button, Collapse, CircularProgress, Typography,
   DialogActions, Select, MenuItem, TextField, Paper, Grid, Backdrop,
+  Badge,
+  Tooltip,
 } from '@mui/material'
-import { format } from 'date-fns-tz'
+import { format } from 'date-fns'
 import { Fragment, useEffect, useState } from 'react'
-import { getStatement, saveStatementConciled } from './view.statement-detail.controller'
+import { deleteStatementConciled, getStatement, saveStatementConciled } from './view.statement-detail.controller'
 import { toast } from 'react-toastify'
 import { AutoComplete } from '@/components/AutoComplete'
-import { getFinancialCategory, getPartner } from '@/utils/search'
+import { getFinancialCategory, getPartner, getUser } from '@/utils/search'
+
+const entryTypeAlias = {
+  '': {
+    title: 'Abertura e fechamento',
+    content: 'A',
+  },
+  'payment': {
+    title: 'Recebimento',
+    content: 'R',
+  },
+  'shipping': {
+    title: 'Frete',
+    content: 'F',
+  },
+  'payout': {
+    title: 'Transferência',
+    content: 'T',
+  },
+  'reserve_for_payout': {
+    title: 'Reserva para transferência',
+    content: 'T',
+  },
+  'reserve_for_bpp_shipping_return': {
+    title: 'Reserva para devolução',
+    content: 'D',
+  }
+}
 
 // Formatador de moeda sem símbolo R$
 const formatCurrency = (value) => {
@@ -30,6 +61,7 @@ const typeDescription = (raw) => {
 }
 
 export function ViewStatementDetail({ statementId, onClose, onError }) {
+
   const [loading, setLoading] = useState(false)
   const [statement, setStatement] = useState(null)
   const [originalData, setOriginalData] = useState(null)
@@ -45,8 +77,18 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
         setLoading(true)
         if (statementId) {
           const statement = await getStatement({ statementId })
-          setStatement(statement)
+
           setOriginalData(statement.statementData)
+          // Inicialmente, já aplicar filtro (ou carregar todos)
+          const filteredData = statement.statementData.filter((data) =>
+            statement.entryTypes?.length > 0 ? statement.entryTypes.includes(data.entryType) : true
+          )
+
+          setStatement({
+            ...statement,
+            statementData: filteredData,
+            entryTypes: statement.entryTypes ?? [],
+          })
           setEntryTypeFilters(statement.entryTypes ?? [])
         }
       } catch (error) {
@@ -59,6 +101,7 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
 
     fetchStatement()
   }, [statementId])
+
 
   const toggleExpand = (idx) => {
     setExpandedRow((prev) => (prev === idx ? null : idx))
@@ -180,8 +223,16 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                     <TableCell align="right">{formatCurrency(data.credit)}</TableCell>
                     <TableCell align="right">{formatCurrency(data.debit)}</TableCell>
                     <TableCell align="right">{formatCurrency(data.balance)}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => toggleExpand(index)}>
+                    <TableCell align='right' style={{ width: '100px' }}>
+                      <Tooltip title={entryTypeAlias[data.entryType]?.title || data.entryType}>
+                        <Badge
+                          color="primary"
+                          badgeContent={entryTypeAlias[data.entryType]?.content || '?'}
+                          sx={{ '& .MuiBadge-badge': { right: 10, fontWeight: 'bold' } }}
+                        >
+                        </Badge>
+                      </Tooltip>
+                      <IconButton size='large' onClick={() => toggleExpand(index)}>
                         {expandedRow === index
                           ? <i className="ri-arrow-up-circle-line" />
                           : <i className="ri-arrow-down-circle-line" />
@@ -217,6 +268,22 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                           [index]: { editIndex, values: { ...item } },
                         }))
                       }
+                      onDelete={async (item) => {
+                        try {
+                          await deleteStatementConciled({ id: item.id })
+                          
+                          setStatement((prev) => {
+                            const updatedData = [...prev.statementData]
+                            const concileds = updatedData[index].concileds.filter((c) => c.id !== item.id)
+                            updatedData[index] = { ...updatedData[index], concileds }
+                            return { ...prev, statementData: updatedData }
+                          })
+
+                          toast.success('Registro excluído com sucesso')
+                        } catch (error) {
+                          toast.error(error.message)
+                        }
+                      }}
                     />
                   )}
                 </Fragment>
@@ -225,15 +292,16 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
           </Table>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'space-between' }}>
-          <Button
-            variant="outlined"
+          <IconButton
             onClick={() => {
               setEntryTypeFilters(statement?.entryTypes ?? [])
               setShowFilterDialog(true)
             }}
+            size="small"
           >
-            Filtrar Tipos
-          </Button>
+            <i className="ri-filter-line" />
+          </IconButton>
+
           <div>
             <Button variant="text" onClick={onClose}>Desconciliar</Button>
             <Button variant="contained" color="success" onClick={onClose} sx={{ ml: 1 }}>Conciliar</Button>
@@ -243,37 +311,42 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
 
       {/* Filtro de Tipos */}
       <Dialog open={showFilterDialog} onClose={() => setShowFilterDialog(false)}>
-        <DialogTitle>Filtrar Tipos de Lançamento</DialogTitle>
+        <DialogTitle>Tipos de lançamentos</DialogTitle>
         <DialogContent>
-          {statement?.allEntryTypes?.map((type) => (
-            <div key={type}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={statement?.entryTypes?.includes(type) ?? false}
-                  onChange={(e) => {
-                    setEntryTypeFilters((prev) =>
-                      e.target.checked
-                        ? [...prev, type]
-                        : prev.filter((t) => t !== type)
-                    )
-                  }}
-                />
-                &nbsp;{typeDescription(type)}
-              </label>
-            </div>
-          ))}
+          {statement?.allEntryTypes?.map((type) => {
+            const isChecked = entryTypeFilters.includes(type)
+            return (
+              <div key={type}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
+                      setEntryTypeFilters((prev) =>
+                        e.target.checked
+                          ? [...prev, type]
+                          : prev.filter((t) => t !== type)
+                      )
+                    }}
+                  />
+                  &nbsp;{(entryTypeAlias[type] ? `${entryTypeAlias[type]?.content || ''} - ${entryTypeAlias[type].title}` : type)}
+                </label>
+              </div>
+            )
+          })}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowFilterDialog(false)}>Cancelar</Button>
           <Button variant="contained" onClick={applyEntryTypeFilter}>Aplicar</Button>
         </DialogActions>
       </Dialog>
+
+
     </>
   )
 }
 
-function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, onCancelAdd, onCancelEdit, onStartEdit }) {
+function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, onCancelAdd, onCancelEdit, onStartEdit, onDelete }) {
   return (
     <TableRow>
       <TableCell colSpan={9} sx={{ p: 0 }}>
@@ -304,13 +377,19 @@ function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, 
                 ) : (
                   <TableRow key={i}>
                     <TableCell>{typeDescription(item.type)}</TableCell>
-                    <TableCell>{item.partnerName || item.categoryName || '-'}</TableCell>
+                    <TableCell>{item.partner.surname}<br></br>{item.category.description}</TableCell>
                     <TableCell align="right">{formatCurrency(item.amount)}</TableCell>
                     <TableCell align="right">{formatCurrency(item.fee)}</TableCell>
                     <TableCell align="right">{formatCurrency(item.discount)}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => onStartEdit(i, item)}>
                         <i className="ri-pencil-line" />
+                      </IconButton>
+                      <IconButton onClick={() => onDelete(item)}>
+                        <i className="ri-delete-bin-line" />
+                      </IconButton>
+                      <IconButton onClick={() => onVincule(item)}>
+                        <i className="ri-search-line" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -329,7 +408,13 @@ function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, 
               ) : (
                 <TableRow>
                   <TableCell colSpan={6}>
-                    <Button onClick={() => onAdd(index)}>Adicionar Conciliado</Button>
+                    <Button
+                      variant="text"
+                      startIcon={<i className="ri-add-circle-line" />}
+                      onClick={() => onAdd(index)}
+                    >
+                      Adicionar
+                    </Button>
                   </TableCell>
                 </TableRow>
               )}
@@ -342,61 +427,117 @@ function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, 
 }
 
 function ConciliationForm({ statementDataId, index, input, onChange, onConfirm, onCancel }) {
+  const [localInput, setLocalInput] = useState(input || {})
+  const [localLoading, setLocalLoading] = useState(false)
+
+  useEffect(() => {
+    setLocalInput(input || {})
+  }, [input])
+
+  const handleChange = (field, value) => {
+    const updated = { ...localInput, [field]: value }
+    setLocalInput(updated)
+    onChange(index, field, value)
+  }
+
+  const handleConfirm = async () => {
+    setLocalLoading(true)
+    try {
+      await onConfirm()
+    } finally {
+      setLocalLoading(false)
+    }
+  }
+
   return (
     <TableRow>
-      <TableCell>
-        <Select
-          value={input.type || ''}
-          onChange={(e) => onChange(index, 'type', e.target.value)}
-          displayEmpty
-          size="small"
-          fullWidth
-        >
-          <MenuItem value="">Selecione tipo</MenuItem>
-          <MenuItem value="transfer">Transferência</MenuItem>
-          <MenuItem value="payment">Pagamento</MenuItem>
-          <MenuItem value="receivement">Recebimento</MenuItem>
-        </Select>
-      </TableCell>
-      <TableCell>
-        <TextField
-          size="small"
-          value={input.partner || ''}
-          onChange={(e) => onChange(index, 'partner', e.target.value)}
-          placeholder="Parceiro ou Categoria"
-          fullWidth
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          size="small"
-          type="number"
-          value={input.amount || ''}
-          onChange={(e) => onChange(index, 'amount', e.target.value)}
-          fullWidth
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          size="small"
-          type="number"
-          value={input.fee || ''}
-          onChange={(e) => onChange(index, 'fee', e.target.value)}
-          fullWidth
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          size="small"
-          type="number"
-          value={input.discount || ''}
-          onChange={(e) => onChange(index, 'discount', e.target.value)}
-          fullWidth
-        />
-      </TableCell>
-      <TableCell>
-        <Button size="small" onClick={onConfirm} variant="contained" color="primary">Salvar</Button>
-        <Button size="small" onClick={onCancel} variant="text" color="secondary">Cancelar</Button>
+      <TableCell colSpan={9} sx={{ p: 2 }}>
+        <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f9f9f9' }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={1.8}>
+              <Select
+                fullWidth
+                size="small"
+                value={localInput.type || ''}
+                onChange={(e) => handleChange('type', e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">[Selecione]</MenuItem>
+                <MenuItem value="payment">Pagamento</MenuItem>
+                <MenuItem value="receivement">Recebimento</MenuItem>
+                <MenuItem value="transfer">Transferência</MenuItem>
+              </Select>
+            </Grid>
+
+            {localInput.type !== '' && (
+              <>
+                <Grid item xs={12} sm={2.8}>
+                  <AutoComplete
+                    size="small"
+                    variant="outlined"
+                    placeholder="Cliente"
+                    value={localInput.partner}
+                    text={(partner) => partner.surname}
+                    onChange={(partner) => handleChange('partner', partner)}
+                    onSearch={getPartner}
+                  >
+                    {(item) => <span>{item.surname}</span>}
+                  </AutoComplete>
+
+                  <AutoComplete
+                    size="small"
+                    variant="outlined"
+                    placeholder="Categoria"
+                    value={localInput.category}
+                    text={(category) => category.description}
+                    onChange={(category) => handleChange('category', category)}
+                    onSearch={getFinancialCategory}
+                  >
+                    {(item) => <span>{item.description}</span>}
+                  </AutoComplete>
+                </Grid>
+
+                <Grid item xs={12} sm={1.31}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Valor"
+                    value={localInput.amount || ''}
+                    onChange={(e) => handleChange('amount', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={1.31}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Taxa"
+                    value={localInput.fee || ''}
+                    onChange={(e) => handleChange('fee', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={1.31}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    placeholder="Desconto"
+                    value={localInput.discount || ''}
+                    onChange={(e) => handleChange('discount', e.target.value)}
+                  />
+                </Grid>
+              </>
+            )}
+
+            <Grid item xs={12} sm={1}>
+              <IconButton color="success" size="small" onClick={handleConfirm} disabled={localLoading}>
+                {localLoading ? <CircularProgress size={18} /> : <i className="ri-check-line" />}
+              </IconButton>
+              <IconButton color="error" size="small" onClick={onCancel} disabled={localLoading}>
+                <i className="ri-close-line" />
+              </IconButton>
+            </Grid>
+          </Grid>
+        </Paper>
       </TableCell>
     </TableRow>
   )

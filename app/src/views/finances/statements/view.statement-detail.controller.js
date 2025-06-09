@@ -25,7 +25,7 @@ export async function getStatement({ statementId }) {
   const statementData = await db.StatementData.findAll({
     where: {
       statementId: statement.id,
-      entryType: { [Sequelize.Op.in]: entryTypesArray }
+      //entryType: { [Sequelize.Op.in]: entryTypesArray }
     },
     order: [
       [Sequelize.literal('CASE WHEN [entryDate] IS NULL THEN 1 ELSE 0 END'), 'ASC'],
@@ -87,5 +87,13 @@ export async function saveStatementConciled(statementDataId, values) {
     return { ...values, id: result.id }
 
   }
+
+}
+
+export async function deleteStatementConciled({id}) {
+
+  const db = new AppContext()
+
+  await db.StatementDataConciled.destroy({where: [{id}]})
 
 }
