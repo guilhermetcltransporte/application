@@ -14,12 +14,12 @@ export class StatementDataConciled {
     type: DataTypes.UUIDV4
   }
 
-  /*
-  name = {
-    field: 'name',
-    type: DataTypes.STRING(100)
-  };
+  partnerId = {
+    field: 'partnerId',
+    type: DataTypes.BIGINT
+  }
 
+/*
   receivementId = {
     field: 'receivementId',
     type: DataTypes.UUIDV4
@@ -29,22 +29,26 @@ export class StatementDataConciled {
     field: 'paymentId',
     type: DataTypes.UUIDV4
   }
-  
-  paymentCategorieId = {
-    field: 'paymentCategorieId',
-    type: DataTypes.UUIDV4
-  };
+*/
 
+  categoryId = {
+    field: 'categoryId',
+    type: DataTypes.INTEGER
+  }
+
+/*
   action = {
     field: 'action',
     type: DataTypes.STRING(30)
   };
+  */
 
   type = {
     field: 'type',
     type: DataTypes.STRING(30)
-  };
+  }
 
+  /*
   originId = {
     field: 'originId',
     type: DataTypes.UUIDV4
@@ -64,18 +68,18 @@ export class StatementDataConciled {
     field: 'amount',
     type: DataTypes.DECIMAL(18, 2)
   }
-  
-/*
+
   fee = {
     field: 'fee',
     type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
   discount = {
     field: 'discount',
     type: DataTypes.DECIMAL(18, 2)
-  };
+  }
 
+/*
   isConciled = {
     field: 'isConciled',
     type: DataTypes.BOOLEAN

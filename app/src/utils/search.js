@@ -56,6 +56,54 @@ export async function getUser (search) {
     
 }
 
+export async function getPartner (search) {
+    
+    const session = await getServerSession(authOptions)
+
+    const db = new AppContext()
+
+    const where = []
+
+    //where.push({'$companyUsers.company.codigo_empresa$': session.company.companyBusinessId})
+
+    //where.push({'$userName$': {[Sequelize.Op.like]: `%${search.replace(' ', "%").toUpperCase()}%`}})
+
+    const partners = await db.Partner.findAll({
+        attributes: ['codigo_pessoa', 'surname'],
+        order: [['surname', 'asc']],
+        limit: 20,
+        offset: 0,
+        subQuery: false
+    })
+
+    return _.map(partners, (item) => item.get({ plain: true }))
+    
+}
+
+
+export async function getFinancialCategory (search) {
+    
+    const session = await getServerSession(authOptions)
+
+    const db = new AppContext()
+
+    const where = []
+
+    //where.push({'$companyUsers.company.codigo_empresa$': session.company.companyBusinessId})
+
+    //where.push({'$userName$': {[Sequelize.Op.like]: `%${search.replace(' ', "%").toUpperCase()}%`}})
+
+    const financialCategories = await db.FinancialCategory.findAll({
+        attributes: ['id', 'description'],
+        order: [['description', 'asc']],
+        limit: 20,
+        offset: 0,
+        subQuery: false
+    })
+
+    return _.map(financialCategories, (item) => item.get({ plain: true }))
+    
+}
 
 export async function getBankAccounts (search) {
     
@@ -87,5 +135,34 @@ export async function getBankAccounts (search) {
     })
 
     return _.map(bankAccounts, (user) => user.get({ plain: true }))
+    
+}
+
+export async function getPaymentMethod (search) {
+    
+    const session = await getServerSession(authOptions)
+
+    const db = new AppContext()
+
+    const where = []
+
+    //where.push({'$companyUsers.company.codigo_empresa$': session.company.companyBusinessId})
+
+    //where.push({'$userName$': {[Sequelize.Op.like]: `%${search.replace(' ', "%").toUpperCase()}%`}})
+
+    const paymentMethods = await db.PaymentMethod.findAll({
+        attributes: ['id', 'name'],
+        where: {
+            name: {
+                [Sequelize.Op.like]: `%${search.replace(/ /g, "%").toUpperCase()}%`
+            }
+        },
+        order: [['name', 'asc']],
+        limit: 20,
+        offset: 0,
+        subQuery: false
+    })
+
+    return _.map(paymentMethods, (item) => item.get({ plain: true }))
     
 }

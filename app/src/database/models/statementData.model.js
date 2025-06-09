@@ -19,8 +19,8 @@ export class StatementData {
     type: DataTypes.STRING
   }
 
-  description = {
-    field: 'description',
+  entryType = {
+    field: 'entryType',
     type: DataTypes.STRING(50),
   }
 

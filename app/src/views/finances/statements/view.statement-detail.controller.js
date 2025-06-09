@@ -5,49 +5,87 @@ import { authOptions } from "@/libs/auth"
 import { getServerSession } from "next-auth"
 
 import _ from "lodash"
+import { Sequelize } from "sequelize"
 
-export async function getStatement({statementId}) {
-    
-    //const session = await getServerSession(authOptions)
+export async function getStatement({ statementId }) {
 
-    const db = new AppContext()
+  const db = new AppContext()
 
-    const statement = await db.Statement.findOne({
+  const statement = await db.Statement.findOne({
+    where: { id: statementId }
+  })
+
+  if (!statement) return null
+
+  const entryTypes = statement.entryTypes ?? []
+  const entryTypesArray = typeof entryTypes === 'string'
+    ? entryTypes.split(',')
+    : entryTypes
+
+  const statementData = await db.StatementData.findAll({
+    where: {
+      statementId: statement.id,
+      entryType: { [Sequelize.Op.in]: entryTypesArray }
+    },
+    order: [
+      [Sequelize.literal('CASE WHEN [entryDate] IS NULL THEN 1 ELSE 0 END'), 'ASC'],
+      ['entryDate', 'ASC']
+    ],
+    include: [
+      {
+        model: db.StatementDataConciled,
+        as: 'concileds',
         include: [
-            { model: db.StatementData, as: 'statementData', include: [
-                { model: db.StatementDataConciled, as: 'concileds' }
-            ]}
-        ],
-        where: [
-            {id: statementId}
-        ],
-        order: [[{ model: db.StatementData, as: 'statementData' }, 'entryDate', 'ASC']],
-    })
+          { model: db.Partner, as: 'partner' },
+          { model: db.FinancialCategory, as: 'category' }
+        ]
+      }
+    ]
+  });
 
-    return statement.get({ plain: true })
+  const cleanData = statementData.map(data => data.get({ plain: true }))
+
+  const allEntryTypes = [
+    ...new Set(cleanData.map(data => data.entryType))
+  ]
+
+  const response = {
+    ...statement.get({ plain: true }),
+    statementData: cleanData,
+    allEntryTypes
+  }
+
+  console.log(allEntryTypes)
+
+  return response;
 
 }
 
+
 export async function saveStatementConciled(statementDataId, values) {
-  const db = new AppContext();
+
+  const db = new AppContext()
 
   const payload = {
     statementDataId,
     type: values.type,
-    description: values.description || '',
+    partnerId: values.partner?.codigo_pessoa || null,
+    categoryId: values.category?.id || null,
     amount: Number(values.amount) || 0,
     fee: Number(values.fee) || 0,
     discount: Number(values.discount) || 0,
-    partnerId: values.partner?.id || null,
-  };
+  }
 
   if (values.id) {
-    // Edição
+
     await db.StatementDataConciled.update(payload, { where: { id: values.id } });
-    return { ...payload, id: values.id };
+    return { ...values, id: values.id }
+
   } else {
-    // Criação
-    const result = await db.StatementDataConciled.create(payload);
-    return result.toJSON();
+
+    const result = await db.StatementDataConciled.create(payload)
+    return { ...values, id: result.id }
+
   }
+
 }

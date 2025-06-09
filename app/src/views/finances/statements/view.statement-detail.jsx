@@ -1,37 +1,40 @@
-'use client'
-
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
-  Button,
-  Collapse,
-  CircularProgress,
-  Typography,
-  DialogActions,
-  Select,
-  MenuItem,
-  TextField,
-  Paper,
-  Grid,
-  Backdrop,
+  Dialog, DialogTitle, DialogContent, Table, TableHead, TableRow, TableCell,
+  TableBody, IconButton, Button, Collapse, CircularProgress, Typography,
+  DialogActions, Select, MenuItem, TextField, Paper, Grid, Backdrop,
 } from '@mui/material'
 import { format } from 'date-fns-tz'
 import { Fragment, useEffect, useState } from 'react'
 import { getStatement, saveStatementConciled } from './view.statement-detail.controller'
 import { toast } from 'react-toastify'
 import { AutoComplete } from '@/components/AutoComplete'
-import { getUser } from '@/utils/search'
+import { getFinancialCategory, getPartner } from '@/utils/search'
+
+// Formatador de moeda sem símbolo R$
+const formatCurrency = (value) => {
+  if (value == null || isNaN(value)) return ''
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+const typeDescription = (raw) => {
+  switch (raw) {
+    case 'transfer': return 'Transferência'
+    case 'payment': return 'Pagamento'
+    case 'receivement': return 'Recebimento'
+    default: return raw
+  }
+}
 
 export function ViewStatementDetail({ statementId, onClose, onError }) {
   const [loading, setLoading] = useState(false)
   const [statement, setStatement] = useState(null)
+  const [originalData, setOriginalData] = useState(null)
+  const [entryTypeFilters, setEntryTypeFilters] = useState([])
+  const [showFilterDialog, setShowFilterDialog] = useState(false)
   const [expandedRow, setExpandedRow] = useState(null)
   const [newConciledInput, setNewConciledInput] = useState({})
   const [editingConciled, setEditingConciled] = useState({})
@@ -43,6 +46,8 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
         if (statementId) {
           const statement = await getStatement({ statementId })
           setStatement(statement)
+          setOriginalData(statement.statementData)
+          setEntryTypeFilters(statement.entryTypes ?? [])
         }
       } catch (error) {
         toast.error(error.message)
@@ -62,13 +67,12 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
   const handleAddConciled = (idx) => {
     setNewConciledInput((prev) => ({
       ...prev,
-      [idx]: { type: '', description: '', amount: '', fee: '', discount: '' },
+      [idx]: { type: '', partner: null, category: null, amount: '', fee: '', discount: '' },
     }))
   }
 
   const handleInputChange = (idx, field, value) => {
     if (editingConciled[idx]) {
-      // Atualiza os valores do registro que está sendo editado
       setEditingConciled((prev) => ({
         ...prev,
         [idx]: {
@@ -77,7 +81,6 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
         },
       }))
     } else {
-      // Atualiza o novo registro que está sendo adicionado
       setNewConciledInput((prev) => ({
         ...prev,
         [idx]: { ...prev[idx], [field]: value },
@@ -85,7 +88,6 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
     }
   }
 
-  // Atualiza o statement no estado após salvar um registro novo ou editado
   const updateStatementAfterSave = (idx, updatedConciled, editIndex = null) => {
     const updated = [...statement.statementData]
     if (editIndex !== null) {
@@ -112,14 +114,24 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
     })
   }
 
+  const applyEntryTypeFilter = () => {
+    const filteredData = originalData.filter((data) =>
+      entryTypeFilters.includes(data.entryType)
+    )
+    setStatement((prev) => ({
+      ...prev,
+      entryTypes: entryTypeFilters,
+      statementData: filteredData,
+    }))
+    setShowFilterDialog(false)
+  }
+
   return (
     <>
       {loading && (
-        <Backdrop open={true} sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff' }}>
+        <Backdrop open sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff' }}>
           <CircularProgress color="inherit" />
-          <Typography variant="h6" sx={{ mt: 2, color: '#fff' }}>
-            Carregando...
-          </Typography>
+          <Typography variant="h6" sx={{ mt: 2, color: '#fff' }}>&nbsp;Carregando...</Typography>
         </Backdrop>
       )}
 
@@ -160,21 +172,20 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
               {(statement?.statementData || []).map((data, index) => (
                 <Fragment key={index}>
                   <TableRow>
-                    <TableCell>{data.sourceId}</TableCell>
+                    <TableCell style={{ width: '140px' }}>{data.sourceId}</TableCell>
                     <TableCell>{format(data.entryDate, 'dd/MM/yyyy HH:mm')}</TableCell>
                     <TableCell>{data.orderId ? `Ref. pedido #${data.orderId}` : ''}</TableCell>
-                    <TableCell>{data.amount?.toFixed(2)}</TableCell>
-                    <TableCell>{data.fee?.toFixed(2)}</TableCell>
-                    <TableCell>{data.credit?.toFixed(2)}</TableCell>
-                    <TableCell>{data.debit?.toFixed(2)}</TableCell>
-                    <TableCell>{data.balance?.toFixed(2)}</TableCell>
+                    <TableCell align="right">{formatCurrency(data.amount)}</TableCell>
+                    <TableCell align="right">{formatCurrency(data.fee)}</TableCell>
+                    <TableCell align="right">{formatCurrency(data.credit)}</TableCell>
+                    <TableCell align="right">{formatCurrency(data.debit)}</TableCell>
+                    <TableCell align="right">{formatCurrency(data.balance)}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => toggleExpand(index)}>
-                        {expandedRow === index ? (
-                          <i className="ri-arrow-up-circle-line" />
-                        ) : (
-                          <i className="ri-arrow-down-circle-line" />
-                        )}
+                        {expandedRow === index
+                          ? <i className="ri-arrow-up-circle-line" />
+                          : <i className="ri-arrow-down-circle-line" />
+                        }
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -191,11 +202,9 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                         try {
                           const saved = await saveStatementConciled(data.id, input)
                           updateStatementAfterSave(index, saved, editIndex)
-                          if (editIndex !== null) {
-                            handleCancelConciledEdit(index)
-                          } else {
-                            handleCancelConciledAdd(index)
-                          }
+                          editIndex !== null
+                            ? handleCancelConciledEdit(index)
+                            : handleCancelConciledAdd(index)
                         } catch (error) {
                           toast.error(error.message)
                         }
@@ -205,10 +214,7 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                       onStartEdit={(editIndex, item) =>
                         setEditingConciled((prev) => ({
                           ...prev,
-                          [index]: {
-                            editIndex,
-                            values: { ...item },
-                          },
+                          [index]: { editIndex, values: { ...item } },
                         }))
                       }
                     />
@@ -218,36 +224,71 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
             </TableBody>
           </Table>
         </DialogContent>
+        <DialogActions sx={{ justifyContent: 'space-between' }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setEntryTypeFilters(statement?.entryTypes ?? [])
+              setShowFilterDialog(true)
+            }}
+          >
+            Filtrar Tipos
+          </Button>
+          <div>
+            <Button variant="text" onClick={onClose}>Desconciliar</Button>
+            <Button variant="contained" color="success" onClick={onClose} sx={{ ml: 1 }}>Conciliar</Button>
+          </div>
+        </DialogActions>
+      </Dialog>
+
+      {/* Filtro de Tipos */}
+      <Dialog open={showFilterDialog} onClose={() => setShowFilterDialog(false)}>
+        <DialogTitle>Filtrar Tipos de Lançamento</DialogTitle>
+        <DialogContent>
+          {statement?.allEntryTypes?.map((type) => (
+            <div key={type}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={statement?.entryTypes?.includes(type) ?? false}
+                  onChange={(e) => {
+                    setEntryTypeFilters((prev) =>
+                      e.target.checked
+                        ? [...prev, type]
+                        : prev.filter((t) => t !== type)
+                    )
+                  }}
+                />
+                &nbsp;{typeDescription(type)}
+              </label>
+            </div>
+          ))}
+        </DialogContent>
         <DialogActions>
-          <Button variant="text" color="primary" sx={{ mt: 4 }} onClick={onClose}>
-            Desconciliar
-          </Button>
-          <Button variant="contained" color="success" sx={{ mt: 4 }} onClick={onClose}>
-            Conciliar
-          </Button>
+          <Button onClick={() => setShowFilterDialog(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={applyEntryTypeFilter}>Aplicar</Button>
         </DialogActions>
       </Dialog>
     </>
   )
 }
 
-function ExpandedRow({
-  index,
-  data,
-  input,
-  editing,
-  onAdd,
-  onChange,
-  onConfirm,
-  onCancelAdd,
-  onCancelEdit,
-  onStartEdit,
-}) {
+function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, onCancelAdd, onCancelEdit, onStartEdit }) {
   return (
     <TableRow>
       <TableCell colSpan={9} sx={{ p: 0 }}>
-        <Collapse in={true}>
+        <Collapse in>
           <Table size="small" sx={{ mb: 1 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Tipo</TableCell>
+                <TableCell>Descrição</TableCell>
+                <TableCell>Valor</TableCell>
+                <TableCell>Taxa</TableCell>
+                <TableCell>Desconto</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableHead>
             <TableBody>
               {(data.concileds || []).map((item, i) =>
                 editing?.editIndex === i ? (
@@ -262,46 +303,35 @@ function ExpandedRow({
                   />
                 ) : (
                   <TableRow key={i}>
-                    <TableCell style={{ width: '120px' }}>{item.id}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.amount?.toFixed(2)}</TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => onStartEdit(i, item)}>
+                    <TableCell>{typeDescription(item.type)}</TableCell>
+                    <TableCell>{item.partnerName || item.categoryName || '-'}</TableCell>
+                    <TableCell align="right">{formatCurrency(item.amount)}</TableCell>
+                    <TableCell align="right">{formatCurrency(item.fee)}</TableCell>
+                    <TableCell align="right">{formatCurrency(item.discount)}</TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => onStartEdit(i, item)}>
                         <i className="ri-pencil-line" />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => alert('Implementar exclusão')}>
-                        <i className="ri-delete-bin-line" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
                 )
               )}
 
-              {/* MOSTRA O FORMULÁRIO DE ADICIONAR APENAS SE NÃO ESTIVER EDITANDO */}
-              {!editing && (
-                input ? (
-                  <ConciliationForm
-                    statementDataId={data.id}
-                    index={index}
-                    input={input}
-                    onChange={onChange}
-                    onConfirm={() => onConfirm(input)}
-                    onCancel={() => onCancelAdd(index)}
-                  />
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={9}>
-                      <Button
-                        size="small"
-                        variant="text"
-                        startIcon={<i className="ri-add-circle-line" />}
-                        onClick={() => onAdd(index)}
-                      >
-                        Adicionar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
+              {input ? (
+                <ConciliationForm
+                  statementDataId={data.id}
+                  index={index}
+                  input={input}
+                  onChange={onChange}
+                  onConfirm={() => onConfirm(input)}
+                  onCancel={() => onCancelAdd(index)}
+                />
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6}>
+                    <Button onClick={() => onAdd(index)}>Adicionar Conciliado</Button>
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -312,117 +342,61 @@ function ExpandedRow({
 }
 
 function ConciliationForm({ statementDataId, index, input, onChange, onConfirm, onCancel }) {
-  const [localInput, setLocalInput] = useState(input || {})
-  const [localLoading, setLocalLoading] = useState(false)
-
-  useEffect(() => {
-    setLocalInput(input || {})
-  }, [input])
-
-  const handleChange = (field, value) => {
-    const updated = { ...localInput, [field]: value }
-    setLocalInput(updated)
-    onChange(index, field, value)
-  }
-
-  const handleConfirm = async () => {
-    setLocalLoading(true)
-    try {
-      await onConfirm()
-    } finally {
-      setLocalLoading(false)
-    }
-  }
-
   return (
     <TableRow>
-      <TableCell colSpan={9} sx={{ p: 2 }}>
-        <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f9f9f9' }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={1.8}>
-              <Select
-                fullWidth
-                size="small"
-                value={localInput.type || ''}
-                onChange={(e) => handleChange('type', e.target.value)}
-                displayEmpty
-              >
-                <MenuItem value="">[Selecione]</MenuItem>
-                <MenuItem value="payment">Pagamento</MenuItem>
-                <MenuItem value="receivement">Recebimento</MenuItem>
-                <MenuItem value="transfer">Transferência</MenuItem>
-              </Select>
-            </Grid>
-
-            {localInput.type !== '' && (
-              <>
-                <Grid item xs={12} sm={2.8}>
-                  <AutoComplete
-                    size="small"
-                    variant="outlined"
-                    placeholder="Cliente"
-                    value={localInput.partner}
-                    text={(partner) => partner.userName}
-                    onChange={(partner) => handleChange('partner', partner)}
-                    onSearch={getUser}
-                  >
-                    {(item) => <span>{item.userName}</span>}
-                  </AutoComplete>
-
-                  <AutoComplete
-                    size="small"
-                    variant="outlined"
-                    placeholder="Categoria"
-                    value={localInput.category}
-                    text={(cat) => cat.name}
-                    onChange={(cat) => handleChange('category', cat)}
-                    onSearch={getUser}
-                  >
-                    {(item) => <span>{item.name}</span>}
-                  </AutoComplete>
-                </Grid>
-
-                <Grid item xs={12} sm={1.31}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Valor"
-                    value={localInput.amount || ''}
-                    onChange={(e) => handleChange('amount', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={1.31}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Taxa"
-                    value={localInput.fee || ''}
-                    onChange={(e) => handleChange('fee', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={1.31}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Desconto"
-                    value={localInput.discount || ''}
-                    onChange={(e) => handleChange('discount', e.target.value)}
-                  />
-                </Grid>
-              </>
-            )}
-
-            <Grid item xs={12} sm={1}>
-              <IconButton color="success" size="small" onClick={handleConfirm} disabled={localLoading}>
-                {localLoading ? <CircularProgress size={18} /> : <i className="ri-check-line" />}
-              </IconButton>
-              <IconButton color="error" size="small" onClick={onCancel} disabled={localLoading}>
-                <i className="ri-close-line" />
-              </IconButton>
-            </Grid>
-          </Grid>
-        </Paper>
+      <TableCell>
+        <Select
+          value={input.type || ''}
+          onChange={(e) => onChange(index, 'type', e.target.value)}
+          displayEmpty
+          size="small"
+          fullWidth
+        >
+          <MenuItem value="">Selecione tipo</MenuItem>
+          <MenuItem value="transfer">Transferência</MenuItem>
+          <MenuItem value="payment">Pagamento</MenuItem>
+          <MenuItem value="receivement">Recebimento</MenuItem>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <TextField
+          size="small"
+          value={input.partner || ''}
+          onChange={(e) => onChange(index, 'partner', e.target.value)}
+          placeholder="Parceiro ou Categoria"
+          fullWidth
+        />
+      </TableCell>
+      <TableCell>
+        <TextField
+          size="small"
+          type="number"
+          value={input.amount || ''}
+          onChange={(e) => onChange(index, 'amount', e.target.value)}
+          fullWidth
+        />
+      </TableCell>
+      <TableCell>
+        <TextField
+          size="small"
+          type="number"
+          value={input.fee || ''}
+          onChange={(e) => onChange(index, 'fee', e.target.value)}
+          fullWidth
+        />
+      </TableCell>
+      <TableCell>
+        <TextField
+          size="small"
+          type="number"
+          value={input.discount || ''}
+          onChange={(e) => onChange(index, 'discount', e.target.value)}
+          fullWidth
+        />
+      </TableCell>
+      <TableCell>
+        <Button size="small" onClick={onConfirm} variant="contained" color="primary">Salvar</Button>
+        <Button size="small" onClick={onCancel} variant="text" color="secondary">Cancelar</Button>
       </TableCell>
     </TableRow>
   )

@@ -17,6 +17,8 @@ import { FinancialMovementIntallment } from './models/financialMovementInstallme
 import { Partner } from './models/partner.model.js'
 import { StatementData } from './models/statementData.model.js'
 import { StatementDataConciled } from './models/statementDataConciled.model.js'
+import { FinancialCategory } from './models/financialCategory.model.js'
+import { PaymentMethod } from './models/paymentMethod.model.js'
 
 const afterFind = (result) => {
   const trimStrings = obj => {
@@ -48,6 +50,8 @@ export class AppContext extends Sequelize {
 
   CompanyUser = this.define('companyUser', new CompanyUser(), { tableName: 'companyUser' })
 
+  FinancialCategory = this.define('financialCategory', new FinancialCategory(), { tableName: 'PlanoContasContabil' })
+
   FinancialMovement = this.define('financialMovement', new FinancialMovement(), { tableName: 'movimentos' })
 
   FinancialMovementInstallment = this.define('financialMovementIntallment', new FinancialMovementIntallment(), { tableName: 'movimentos_detalhe' })
@@ -55,6 +59,8 @@ export class AppContext extends Sequelize {
   Integration = this.define('integration', new Integration(), { tableName: 'integration' })
 
   Partner = this.define('partner', new Partner(), { tableName: 'pessoa' })
+
+  PaymentMethod = this.define('paymentMethod', new PaymentMethod(), { tableName: 'paymentMethod' })
 
   Statement = this.define('statement', new Statement(), { tableName: 'statement' })
 
@@ -111,6 +117,9 @@ export class AppContext extends Sequelize {
 
     this.StatementData.hasMany(this.StatementDataConciled, { as: 'concileds', foreignKey: 'statementDataId' })
 
+    this.StatementDataConciled.belongsTo(this.Partner, { as: 'partner', foreignKey: 'partnerId', targetKey: 'codigo_pessoa' })
+    this.StatementDataConciled.belongsTo(this.FinancialCategory, { as: 'category', foreignKey: 'categoryId', targetKey: 'id' })
+    
 
     this.User.hasMany(this.CompanyUser, { as: 'companyUsers', foreignKey: 'userId' })
     this.User.belongsTo(this.UserMember, { as: 'userMember', foreignKey: 'userId', targetKey: 'userId' })

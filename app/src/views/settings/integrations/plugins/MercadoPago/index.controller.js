@@ -108,7 +108,7 @@ export async function getStatement({companyIntegrationId, fileName}) {
         //statementData.shippingCost = undefined;
         //statementData.statementId = statement2.id;              
         statementData.entryDate = item.DATE ? format(new Date(item.DATE), 'yyyy-MM-dd HH:mm:ss') : null
-        statementData.description = item.DESCRIPTION
+        statementData.entryType = item.DESCRIPTION
         statementData.sourceId = item.SOURCE_ID?.toString()
         statementData.orderId = item.ORDER_ID?.toString()
         statementData.amount = parseFloat(item.GROSS_AMOUNT)
@@ -123,6 +123,7 @@ export async function getStatement({companyIntegrationId, fileName}) {
             coupon: parseFloat(item.COUPON_AMOUNT),
             shipping: parseFloat(item.SHIPPING_FEE_AMOUNT)
         }
+        //statementData.archive = `{"fileName": "${fileName}", "base64": "${csvText}"}`
 
         statements.push(statementData)
 
