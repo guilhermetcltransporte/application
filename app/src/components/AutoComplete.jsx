@@ -159,7 +159,7 @@ export const AutoComplete = (props) => {
                 onBlur={handleBlur}
                 autoFocus={autoFocus}
                 sx={{
-                    ...(value && props.placeholder && {
+                    ...(value && {
                     '& input::placeholder': {
                         color: 'black',
                         opacity: 1,

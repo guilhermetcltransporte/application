@@ -11,16 +11,95 @@ import {
   Card,
   Box,
   CardContent,
-  CardActions,
+  Dialog, // Importe Dialog para o modal
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material"
 import React, { useState, useEffect, useRef } from "react"
 import { updateInstallment } from "./index.controller"
+import { AutoComplete } from "@/components/AutoComplete";
+import { getPaymentMethod } from "@/utils/search";
 
-// Componente InstallmentCard (inalterado em sua estrutura visual)
-const InstallmentCard = ({ installment, loading }) => {
+// Novo componente para o Modal de Edição
+const EditInstallment = ({ open, onClose, installment, onSave }) => {
+
+  const [editedAmount, setEditedAmount] = useState(installment?.amount || 0)
+  const amountInputRef = useRef(null)
+
+  const [paymentMethod, setPaymentMethod] = useState(null)
+
+  // Atualiza o estado do valor editado sempre que a parcela muda (ou o modal é aberto)
+  useEffect(() => {
+    if (installment) {
+      setEditedAmount(installment.amount || 0);
+    }
+    if (open && amountInputRef.current) {
+      amountInputRef.current.focus();
+    }
+  }, [installment, open]);
+
+  const handleSave = () => {
+    onSave(installment.id, parseFloat(editedAmount));
+    onClose();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} aria-labelledby="edit-amount-dialog-title">
+      <DialogTitle id="edit-amount-dialog-title">Editar</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          <strong>Parcela:</strong> #{installment?.financialMovement?.documentNumber} - {installment?.installment}
+        </Typography>
+        <AutoComplete
+          size="small"
+          label="Forma de pagamento"
+          value={paymentMethod}
+          text={(paymentMethod) => paymentMethod.name}
+          onChange={(paymentMethod) => setPaymentMethod(paymentMethod)}
+          onSearch={getPaymentMethod}
+        >
+          {(item) => <span>{item.name}</span>}
+        </AutoComplete>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={handleSave} variant="contained">Salvar</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+
+// Componente InstallmentCard atualizado
+const InstallmentCard = ({ installment, loading, onOpenEditModal }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
   const isLate = installment.status === "overdue"
   const backgroundColor = isLate ? "#fdecea" : "white"
   const opacity = loading ? 0.5 : 1
+
+  const handleOpenMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEditValueClick = () => {
+    onOpenEditModal(installment); // Abre o modal passando a parcela
+    handleCloseMenu(); // Fecha o menu
+  };
 
   return (
     <Card
@@ -44,6 +123,17 @@ const InstallmentCard = ({ installment, loading }) => {
       )}
 
       <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1, padding: 2, paddingBottom: '6px !important' }}>
+        {/* Ícone de três pontos para o menu de opções */}
+        <Box sx={{ position: "absolute", top: 8, right: 8 }}>
+          <IconButton size="small" onClick={handleOpenMenu}>
+            <i className="ri-more-2-line" style={{ fontSize: 18 }}></i>
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
+            <MenuItem onClick={handleEditValueClick}>Editar</MenuItem>
+            {/* Outras opções poderiam ser adicionadas aqui, como "Excluir", "Marcar como Pago", etc. */}
+          </Menu>
+        </Box>
+
         <Box display="flex" alignItems="center" gap={1}>
           <i className="ri-file-list-2-line text-base" />
           <Typography variant="body2" noWrap>
@@ -62,6 +152,15 @@ const InstallmentCard = ({ installment, loading }) => {
           </Tooltip>
         </Box>
 
+        <Box display="flex" alignItems="center" gap={1}>
+          <i className="ri-wallet-3-line text-base" />
+          <Typography variant="body2" noWrap>
+            <strong>
+              Boleto
+            </strong>
+          </Typography>
+        </Box>
+
         <Box display="flex" alignItems="center">
           <i className="ri-file-text-line mr-1 text-base" style={{ flexShrink: 0 }} />
           <Tooltip title={installment.description || ''}>
@@ -76,8 +175,7 @@ const InstallmentCard = ({ installment, loading }) => {
           </Tooltip>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between" }} gap={1}>
-
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: 'center' }} gap={1}>
           <Box display="flex" alignItems="center" gap={1}>
             <i className="ri-money-dollar-circle-line text-base" />
             <Typography variant="body2">
@@ -96,7 +194,6 @@ const InstallmentCard = ({ installment, loading }) => {
                 : "-"}
             </Typography>
           </Box>
-
         </Box>
       </CardContent>
     </Card>
@@ -215,7 +312,7 @@ const ColumnHeader = ({ bankAccount, onGenerateRemessa, onExportCsv }) => {
   )
 }
 
-// Componente KanbanList (com drag and drop nativo)
+// Componente KanbanList (com drag and drop nativo e integração com o modal)
 const KanbanList = ({
   bankAccount,
   installments,
@@ -227,8 +324,9 @@ const KanbanList = ({
   removeLoadingInstallment
 }) => {
   const [installmentsList, setInstallmentsList] = useState([])
-  // Novo estado para feedback visual quando arrastando sobre a coluna
-  const [isDraggingOver, setIsDraggingOver] = useState(false) 
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false); // Estado para controlar a abertura do modal
+  const [selectedInstallment, setSelectedInstallment] = useState(null); // Estado para a parcela a ser editada no modal
 
   useEffect(() => {
     const installmentIds = bankAccounts.find((col) => col.id === bankAccount.id)?.taskIds || []
@@ -247,45 +345,38 @@ const KanbanList = ({
       : ba
   )
 
-  // Evento onDragStart para o item arrastável
   const handleDragStart = (e, installment) => {
-    // Armazena os dados da parcela e a coluna de origem
     e.dataTransfer.setData("text/plain", JSON.stringify({
       installmentId: installment.id,
       originBankAccountId: bankAccount.id,
-      fromIndex: installmentsList.findIndex(item => item.id === installment.id) // Posição inicial na lista
+      fromIndex: installmentsList.findIndex(item => item.id === installment.id)
     }));
-    e.dataTransfer.effectAllowed = "move"; // Indica que é uma operação de mover
-    e.currentTarget.classList.add("dragging"); // Adiciona uma classe para styling enquanto arrasta
+    e.dataTransfer.effectAllowed = "move";
+    e.currentTarget.classList.add("dragging");
   };
 
-  // Evento onDragEnd para o item arrastável
   const handleDragEnd = (e) => {
-    e.currentTarget.classList.remove("dragging"); // Remove a classe de styling
+    e.currentTarget.classList.remove("dragging");
   };
 
-  // Evento onDragOver para a lista (coluna) - impede o comportamento padrão e permite o drop
   const handleDragOver = (e) => {
-    e.preventDefault(); 
-    e.dataTransfer.dropEffect = "move"; // Define o efeito visual do cursor
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
   };
 
-  // Evento onDragEnter para a lista (coluna) - para feedback visual
   const handleDragEnter = (e) => {
     e.preventDefault();
-    setIsDraggingOver(true); // Define o estado para mostrar feedback visual
+    setIsDraggingOver(true);
   };
 
-  // Evento onDragLeave para a lista (coluna) - remove feedback visual
   const handleDragLeave = (e) => {
     e.preventDefault();
-    setIsDraggingOver(false); // Reseta o estado
+    setIsDraggingOver(false);
   };
 
-  // Evento onDrop para a lista (coluna) - processa a soltura
   const handleDrop = async (e) => {
     e.preventDefault();
-    setIsDraggingOver(false); // Reseta o estado de feedback visual
+    setIsDraggingOver(false);
 
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
     const { installmentId, originBankAccountId, fromIndex } = data;
@@ -293,13 +384,11 @@ const KanbanList = ({
     const draggedInstallment = installments.find(inst => inst.id === installmentId);
     if (!draggedInstallment) return;
 
-    // Determinar a posição de soltura dentro da lista, para permitir reordenação
-    let destIndex = installmentsList.length; // Por padrão, adiciona no final
+    let destIndex = installmentsList.length;
     const children = Array.from(e.currentTarget.querySelectorAll(".task-wrapper"));
 
     for (let i = 0; i < children.length; i++) {
       const childRect = children[i].getBoundingClientRect();
-      // Se o mouse estiver acima da metade de um item, insere antes dele
       if (e.clientY < childRect.top + childRect.height / 2) {
         destIndex = i;
         break;
@@ -308,23 +397,19 @@ const KanbanList = ({
 
     const destBankAccountId = bankAccount.id;
 
-    // Evita arrastar para a mesma posição na mesma coluna
     if (destBankAccountId === originBankAccountId && (fromIndex === destIndex || fromIndex + 1 === destIndex)) {
       return;
     }
 
-    // Atualiza o estado visualmente (otimista)
     let updatedBankAccounts = removeInstallmentFromBankAccount(bankAccounts, originBankAccountId, draggedInstallment.id);
     updatedBankAccounts = insertInstallmentInBankAccount(updatedBankAccounts, destBankAccountId, draggedInstallment.id, destIndex);
     setBankAccounts(updatedBankAccounts);
 
-    addLoadingInstallment(draggedInstallment.id); // Adiciona a parcela à lista de carregamento
+    addLoadingInstallment(draggedInstallment.id);
 
     try {
-      // Chama a API para atualizar o banco de dados
       await updateInstallment({ id: draggedInstallment.id, bankAccountId: destBankAccountId });
     } catch (error) {
-      // Em caso de erro, reverte o estado visual
       setBankAccounts((prev) => {
         let reverted = removeInstallmentFromBankAccount(prev, destBankAccountId, draggedInstallment.id);
         reverted = insertInstallmentInBankAccount(reverted, originBankAccountId, draggedInstallment.id, fromIndex);
@@ -332,10 +417,9 @@ const KanbanList = ({
       });
       alert(`Erro ao mover tarefa #${draggedInstallment.id}, operação revertida.`);
     } finally {
-      removeLoadingInstallment(draggedInstallment.id); // Remove a parcela da lista de carregamento
+      removeLoadingInstallment(draggedInstallment.id);
     }
   };
-
 
   const addNewInstallment = (title) => {
     const maxId = installments.length > 0 ? Math.max(...installments.map(t => t.id || 0)) : 0
@@ -350,10 +434,39 @@ const KanbanList = ({
     )
   }
 
+  // Função para abrir o modal de edição
+  const handleOpenEditModal = (installmentToEdit) => {
+    setSelectedInstallment(installmentToEdit);
+    setModalOpen(true);
+  };
+
+  // Função para fechar o modal
+  const handleCloseEditModal = () => {
+    setModalOpen(false);
+    setSelectedInstallment(null); // Limpa a parcela selecionada
+  };
+
+  // Função para salvar as alterações do modal
+  const handleSaveEditedAmount = async (installmentId, newAmount) => {
+    addLoadingInstallment(installmentId);
+    try {
+      await updateInstallment({ id: installmentId, amount: newAmount });
+      setInstallments(prevInstallments =>
+        prevInstallments.map(inst =>
+          inst.id === installmentId ? { ...inst, amount: newAmount } : inst
+        )
+      );
+    } catch (error) {
+      alert(`Erro ao atualizar o valor da parcela #${installmentId}: ${error.message}`);
+    } finally {
+      removeLoadingInstallment(installmentId);
+    }
+  };
+
+
   return (
     <div
       data-bank-account-id={bankAccount.id === null ? "null" : bankAccount.id}
-      // Eventos de drop para a coluna
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragEnter={handleDragEnter}
@@ -361,13 +474,12 @@ const KanbanList = ({
       style={{
         width: "320px",
         padding: "0.5rem",
-        backgroundColor: "#f4f5f7", // Cor de fundo original
+        backgroundColor: "#f4f5f7",
         borderRadius: 4,
         marginRight: 8,
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        // Adiciona feedback visual para quando um item está sobre a coluna
         border: isDraggingOver ? "2px dashed #007bff" : "2px solid transparent"
       }}
     >
@@ -377,17 +489,30 @@ const KanbanList = ({
           <div
             key={installment.id}
             className="task-wrapper"
-            draggable="true" // Torna o item arrastável
+            draggable="true"
             onDragStart={(e) => handleDragStart(e, installment)}
             onDragEnd={handleDragEnd}
             style={{ cursor: "grab", userSelect: "none", marginBottom: 8 }}
           >
-            {/* O InstallmentCard é renderizado aqui, sem alterações */}
-            <InstallmentCard installment={installment} loading={loadingInstallmentIds.includes(installment.id)} />
+            <InstallmentCard
+              installment={installment}
+              loading={loadingInstallmentIds.includes(installment.id)}
+              onOpenEditModal={handleOpenEditModal} // Passa a função para abrir o modal
+            />
           </div>
         ))}
         {/*<NewInstallment addInstallment={addNewInstallment} />*/}
       </div>
+
+      {/* Renderiza o Modal de Edição */}
+      {selectedInstallment && (
+        <EditInstallment
+          open={modalOpen}
+          onClose={handleCloseEditModal}
+          installment={selectedInstallment}
+          onSave={handleSaveEditedAmount}
+        />
+      )}
     </div>
   )
 }
