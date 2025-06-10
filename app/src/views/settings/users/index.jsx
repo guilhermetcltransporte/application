@@ -327,6 +327,7 @@ export const Users = () => {
         </div>
 
         <Divider />
+
         {!loading && (
           <TablePagination
             component='div'
@@ -341,6 +342,7 @@ export const Users = () => {
       </Card>
 
       <ViewUser companyUserId={companyUserId} onClose={() => setCompanyUserId(undefined)} onSubmit={fetchUsers} />
+
     </>
   )
 }

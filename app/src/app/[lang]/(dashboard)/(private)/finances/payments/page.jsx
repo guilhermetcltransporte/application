@@ -1,14 +1,14 @@
 "use server"
 
 import { ViewFinancesPayments } from '@/views/finances/payments'
-import { getStatements } from '@/views/finances/statements/index.controller'
+import { getPayments } from '@/views/finances/payments/index.controller'
 
-const FinancesStatements = async () => {
+const FinancesPayments = async () => {
 
-  const initialStatements = await getStatements()
-
-  return <ViewFinancesPayments initialStatements={initialStatements} />
+  const initialPayments = await getPayments();
+  
+  return <ViewFinancesPayments initialPayments={initialPayments} />
 
 }
 
-export default FinancesStatements
+export default FinancesPayments

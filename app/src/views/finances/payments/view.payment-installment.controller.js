@@ -1,17 +1,18 @@
 "use server"
 
 import { AppContext } from "@/database"
+import { db } from "@/fake-db/apps/academy"
 import { authOptions } from "@/libs/auth"
 import _ from "lodash"
 import { getServerSession } from "next-auth"
 
-export async function getPayments(formData) {
+export async function getPayment({installmentId}) {
     
     const session = await getServerSession(authOptions)
 
     const db = new AppContext()
 
-    const payments = await db.FinancialMovementInstallment.findAll({
+    const payment = await db.FinancialMovementInstallment.findOne({
         include: [
             {model: db.FinancialMovement, as: 'financialMovement', include: [
                 {model: db.Partner, as: 'partner', attributes: ['codigo_pessoa', 'surname']}
@@ -19,11 +20,21 @@ export async function getPayments(formData) {
             {model: db.PaymentMethod, as: 'paymentMethod'}
         ],
         where: [
-            //{'$bankAccount.CodigoEmpresaFilial$': session.company.codigo_empresa_filial}
+            {codigo_movimento_detalhe: installmentId}
         ],
         limit: 20
     })
 
-    return _.map(payments, (item) => item.get({ plain: true }))
+    return payment.get({ plain: true })
+
+}
+
+export async function savePayment(formData) {
+    
+    const db = new AppContext()
+
+    const installment = await db.FinancialMovementInstallment.upsert(formData)
+
+    return installment
 
 }

@@ -5,12 +5,18 @@ export class FinancialMovementIntallment {
   codigo_movimento_detalhe = {
     field: 'codigo_movimento_detalhe',
     primaryKey: true,
+    autoIncrement: true,
     type: Sequelize.BIGINT
   }
 
   financialMovementId = {
     field: 'codigo_movimento',
     type: Sequelize.BIGINT
+  }
+
+  paymentMethodId = {
+      field: 'paymentMethodId',
+      type: Sequelize.UUIDV4
   }
 
   bankAccountId = {
