@@ -287,6 +287,7 @@ export function ViewStatementDetail({ statementId, onClose, onError }) {
                       }
                       onDelete={async (item) => {
                         try {
+
                           await deleteStatementConciled({ id: item.id })
                           
                           setStatement((prev) => {
@@ -413,15 +414,21 @@ function ExpandedRow({ index, data, input, editing, onAdd, onChange, onConfirm, 
                     <TableCell align="right">{formatCurrency(item.fee)}</TableCell>
                     <TableCell align="right">{formatCurrency(item.discount)}</TableCell>
                     <TableCell>
-                      <IconButton onClick={() => onStartEdit(i, item)}>
-                        <i className="ri-pencil-line" />
-                      </IconButton>
-                      <IconButton onClick={() => onDelete(item)}>
-                        <i className="ri-delete-bin-line" />
-                      </IconButton>
-                      <IconButton onClick={() => onViewDetails(item.id)}> {/* Passa item.id aqui */}
-                        <i className="ri-search-line" />
-                      </IconButton>
+                      <Tooltip title='Editar'>
+                        <IconButton onClick={() => onStartEdit(i, item)}>
+                          <i className="ri-pencil-line" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title='Excluir'>
+                        <IconButton onClick={() => onDelete(item)}>
+                          <i className="ri-delete-bin-line" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title='Vincular'>
+                        <IconButton onClick={() => onViewDetails(item.id)}> {/* Passa item.id aqui */}
+                          <i className="ri-search-line" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 )
@@ -560,12 +567,16 @@ function ConciliationForm({ statementDataId, index, input, onChange, onConfirm, 
             )}
 
             <Grid item xs={12} sm={1}>
-              <IconButton color="success" size="small" onClick={handleConfirm} disabled={localLoading}>
-                {localLoading ? <CircularProgress size={18} /> : <i className="ri-check-line" />}
-              </IconButton>
-              <IconButton color="error" size="small" onClick={onCancel} disabled={localLoading}>
-                <i className="ri-close-line" />
-              </IconButton>
+              <Tooltip title='Confirmar'>
+                <IconButton color="success" size="small" onClick={handleConfirm} disabled={localLoading}>
+                  {localLoading ? <CircularProgress size={18} /> : <i className="ri-check-line" />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title='Cancelar'>
+                <IconButton color="error" size="small" onClick={onCancel} disabled={localLoading}>
+                  <i className="ri-close-line" />
+                </IconButton>
+              </Tooltip>
             </Grid>
           </Grid>
         </Paper>

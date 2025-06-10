@@ -161,7 +161,7 @@ export const AutoComplete = (props) => {
                 sx={{
                     ...(value && {
                     '& input::placeholder': {
-                        color: 'black',
+                        color: 'currentColor',
                         opacity: 1,
                     },
                     }),

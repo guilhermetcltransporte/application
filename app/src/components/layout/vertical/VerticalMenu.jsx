@@ -75,8 +75,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           label="Finanças"
           icon={<i className="ri-money-dollar-circle-line" />}
         >
-          {/*<MenuItem href={`/${locale}/finances/paymentes`}>Contas a pagar</MenuItem>*/}
-          {/*<MenuItem href={`/${locale}/finances/receivements`}>Contas a receber</MenuItem>*/}
+          <MenuItem href={`/${locale}/finances/payments`}>Contas a pagar</MenuItem>
+          <MenuItem href={`/${locale}/finances/receivements`}>Contas a receber</MenuItem>
           <MenuItem href={`/${locale}/finances/prepare`}>Preparação</MenuItem>
           <MenuItem href={`/${locale}/finances/shippiments`}>Remessas</MenuItem>
           <MenuItem href={`/${locale}/finances/shippiments`}>Retornos</MenuItem>

@@ -5,6 +5,7 @@ import { authOptions } from "@/libs/auth"
 import _ from "lodash"
 import { getServerSession } from "next-auth"
 import { Sequelize } from "sequelize"
+import { getTinyCategories, getTinyPartner } from "./integrations/tny"
 
 export async function getUser (search) {
     
@@ -56,34 +57,37 @@ export async function getUser (search) {
     
 }
 
-export async function getPartner (search) {
-    
-    const session = await getServerSession(authOptions)
+export async function getPartner(search) {
 
-    const db = new AppContext()
+  const session = await getServerSession(authOptions);
 
-    const where = []
+  await getTinyPartner(search)
 
-    //where.push({'$companyUsers.company.codigo_empresa$': session.company.companyBusinessId})
+  const db = new AppContext();
 
-    //where.push({'$userName$': {[Sequelize.Op.like]: `%${search.replace(' ', "%").toUpperCase()}%`}})
+  const partners = await db.Partner.findAll({
+    attributes: ['codigo_pessoa', 'surname'],
+    order: [['surname', 'asc']],
+    where: {
+        surname: {
+            [Sequelize.Op.like]: `%${search.replace(/ /g, "%").toUpperCase()}%`
+        }
+    },
+    limit: 20,
+    offset: 0,
+    subQuery: false,
+  });
 
-    const partners = await db.Partner.findAll({
-        attributes: ['codigo_pessoa', 'surname'],
-        order: [['surname', 'asc']],
-        limit: 20,
-        offset: 0,
-        subQuery: false
-    })
+  return partners.map((item) => item.get({ plain: true }));
 
-    return _.map(partners, (item) => item.get({ plain: true }))
-    
 }
 
 
 export async function getFinancialCategory (search) {
     
     const session = await getServerSession(authOptions)
+
+    await getTinyCategories()
 
     const db = new AppContext()
 
