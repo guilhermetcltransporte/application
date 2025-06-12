@@ -6,7 +6,7 @@ import { authOptions } from "@/libs/auth"
 import _ from "lodash"
 import { getServerSession } from "next-auth"
 
-export async function getPayment({installmentId}) {
+export async function getInstallment({installmentId}) {
     
     const session = await getServerSession(authOptions)
 
@@ -25,16 +25,18 @@ export async function getPayment({installmentId}) {
         limit: 20
     })
 
-    return payment.get({ plain: true })
+    return payment?.get({ plain: true })
 
 }
 
-export async function savePayment(formData) {
-    
+export async function saveInstallment(formData) {
+
     const db = new AppContext()
 
-    const installment = await db.FinancialMovementInstallment.upsert(formData)
+    const [installment] = await db.FinancialMovementInstallment.upsert(formData, {
+        returning: true,
+    })
 
-    return installment
+    return installment?.get({ plain: true })
 
 }

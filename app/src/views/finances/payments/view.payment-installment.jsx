@@ -4,9 +4,9 @@ import { Backdrop, Button, CircularProgress, Dialog, DialogActions, DialogConten
 import { Formik, Form } from "formik";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
-import { getPayment, savePayment } from "./view.payment-installment.controller";
+import { getInstallment, saveInstallment } from "./view.payment-installment.controller";
 
-export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
+export const ViewPaymentInstallment = ({ installmentId, onClose }) => {
 
   const [errorState, setErrorState] = useState(null);
 
@@ -15,17 +15,17 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
 
   useEffect(() => {
 
-    const fetchPayment = async () => {
+    const fetchInstallment = async () => {
       try {
+
         setErrorState(null);
         setLoading(true);
 
         if (installmentId) {
-          const payment = await getPayment({ installmentId }); // Certifique-se de passar o ID correto
-          setInstallment(payment || null);
-        } else {
-          setInstallment(null);
+          const payment = await getInstallment({ installmentId })
+          setInstallment(payment)
         }
+
       } catch (error) {
         setErrorState(error);
       } finally {
@@ -33,7 +33,7 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
       }
     };
 
-    fetchPayment();
+    fetchInstallment()
 
   }, [installmentId]);
 
@@ -43,12 +43,12 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
     digitableLine: installment?.boleto?.digitableLine || "",
     dueDate: installment?.boleto?.dueDate || "",
     boletoNumber: installment?.boleto?.number || "",
-  };
+  }
 
   const validationSchema = Yup.object({
-    amount: Yup.number().min(0, "Valor inválido").required("Obrigatório"),
-    paymentMethod: Yup.object().nullable().required("Forma de pagamento obrigatória")
-  });
+    //amount: Yup.number().min(0, "Valor inválido").required("Obrigatório"),
+    //paymentMethod: Yup.object().nullable().required("Forma de pagamento obrigatória")
+  })
 
   const handleSubmit = async (values) => {
 
@@ -56,7 +56,7 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
 
     values.paymentMethodId = values.paymentMethod?.id || null
 
-    const installment = await savePayment(values)
+    const installment = await saveInstallment(values)
 
     onClose(installment)
 
@@ -88,26 +88,9 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ values, errors, touched, handleChange, setFieldValue }) => (
+          {({ values, errors, touched, handleChange, setFieldValue, isSubmitting }) => (
             <Form>
               <DialogContent>
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  <strong>Parcela:</strong> #{installment?.financialMovement?.documentNumber} - {installment?.installment}
-                </Typography>
-
-                <TextField
-                  label="Valor"
-                  type="number"
-                  fullWidth
-                  margin="dense"
-                  size="small"
-                  name="amount"
-                  value={values.amount}
-                  onChange={handleChange}
-                  error={touched.amount && Boolean(errors.amount)}
-                  helperText={touched.amount && errors.amount}
-                />
-
                 <AutoComplete
                   name="paymentMethod"
                   size="small"
@@ -124,7 +107,6 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
                   {(item) => <span>{item.name}</span>}
                 </AutoComplete>
 
-                  {/*
                 <TextField
                   label="Linha digitável"
                   fullWidth
@@ -156,17 +138,19 @@ export const ViewPaymentInstallment = ({ installmentId, onClose, onSave }) => {
                   value={values.boletoNumber}
                   onChange={handleChange}
                 />
-                    */}
-
               </DialogContent>
 
               <DialogActions>
-                {/*
-                <Button onClick={onClose}>Cancelar</Button>
-                <Button type="submit" variant="contained" disabled={loading}>
-                  Salvar
+                <Button type="submit" variant="contained" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+                      Salvando...
+                    </>
+                  ) : (
+                    "Salvar"
+                  )}
                 </Button>
-                */}
               </DialogActions>
             </Form>
           )}

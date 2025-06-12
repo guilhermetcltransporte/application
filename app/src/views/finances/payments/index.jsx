@@ -149,7 +149,12 @@ function Payments({ initialPayments }) {
         </Table>
       </Paper>
       
-      <ViewPaymentInstallment installmentId={installmentId} onClose={() => setInstallmentId(undefined)} />
+      <ViewPaymentInstallment installmentId={installmentId} onClose={(installment) => {
+        console.log("@".repeat(10))
+        console.log(installment)
+        console.log("@".repeat(10))
+        setInstallmentId(undefined)
+      }} />
 {/*
       <ViewAddStatement open={open} setOpen={setOpen} onSubmit={fetch} />
 

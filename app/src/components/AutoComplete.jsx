@@ -43,6 +43,7 @@ export const AutoComplete = (props) => {
   const [inputHelperText, setInputHelperText] = useState('')
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 })
 
+  const textFieldRef = useRef()
   const inputRef = useRef()
   const suggestionsBoxRef = useRef()
   const selectedItemRef = useRef()
@@ -57,8 +58,8 @@ export const AutoComplete = (props) => {
 
   // Atualiza a posição do SuggestionsBox
   const updatePosition = () => {
-    if (!inputRef.current) return
-    const rect = inputRef.current.getBoundingClientRect()
+    if (!textFieldRef.current) return
+    const rect = textFieldRef.current.getBoundingClientRect()
     setPosition({
       top: rect.bottom,
       left: rect.left,
@@ -146,8 +147,8 @@ export const AutoComplete = (props) => {
     if (
       suggestionsBoxRef.current &&
       !suggestionsBoxRef.current.contains(event.target) &&
-      inputRef.current &&
-      !inputRef.current.contains(event.target)
+      textFieldRef.current &&
+      !textFieldRef.current.contains(event.target)
     ) {
       setState(prev => ({ ...prev, query: '', data: [], nothing: false }))
     }
@@ -170,8 +171,10 @@ export const AutoComplete = (props) => {
   return (
     <AutocompleteContainer>
       <TextField
+        autoComplete='off'
         size={props.size ?? 'medium'}
-        ref={inputRef}
+        ref={textFieldRef}
+        inputRef={inputRef}
         name={props.name}
         label={label}
         variant={props.variant ?? 'filled'}
